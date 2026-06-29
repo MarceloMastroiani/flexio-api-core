@@ -1,26 +1,37 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { AuthRepository } from './auth.repository';
+import { User } from 'generated/prisma/client';
+import { comparePassword } from '../common/helpers/hash-password.helpers';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(private readonly authRepository: AuthRepository) {}
+  // ============================================================
+  // AUTHENTICATION
+  // ============================================================
+
+  async login(email: string, password: string): Promise<User> {
+    const user = await this.authRepository.findOneByEmail(email);
+
+    if (!user || !(await comparePassword(password, user.password))) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
+    return user;
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  // ============================================================
+  // USER
+  // ============================================================
+  async createUser(createAuthDto: CreateAuthDto) {
+    return this.authRepository.create(createAuthDto);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
+  async findAllUsers() {
+    return this.authRepository.findAll();
   }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+  async findOneUser(id: string) {
+    return this.authRepository.findOne(id);
   }
 }
