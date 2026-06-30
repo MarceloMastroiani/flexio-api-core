@@ -1,11 +1,12 @@
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../generated/prisma/client';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../src/common/prisma/prisma.service.js';
-import { hashPassword } from '../src/common/helpers/hash-password.helpers.js';
 
 async function main() {
-  const hashedPassword = await hashPassword('1234');
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+  const prisma = new PrismaClient({ adapter });
 
-  const prisma = new PrismaService();
+  const hashedPassword = await bcrypt.hash('1234', 10);
 
   await prisma.user.create({
     data: {
@@ -14,6 +15,11 @@ async function main() {
       role: 'ADMIN',
     },
   });
+
+  await prisma.$disconnect();
 }
 
-main();
+main().catch(async (e) => {
+  console.error(e);
+  process.exit(1);
+});

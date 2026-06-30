@@ -17,5 +17,23 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build: .
+    container_name: api_dev
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PORT: 8080
+    volumes:
+      - .:/usr/src/app # Se monta para evitar recrear node_modules en cada build
+      - /usr/src/app/node_modules # Se monta para evitar recrear node_modules en cada build
+      - /usr/src/app/generated # Se monta para evitar recrear generated en cada build
+    command: sh -c "rm -rf dist/* && pnpm exec prisma migrate deploy && pnpm run build && pnpm run start:dev" # Esto hace deploy de las migraciones, build y luego start:dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
