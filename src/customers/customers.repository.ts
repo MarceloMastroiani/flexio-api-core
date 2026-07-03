@@ -1,0 +1,65 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../common/prisma/prisma.service';
+import { Customer } from '@/generated/prisma/client';
+import { CreateCustomerDto } from './dto/create-customer.dto';
+
+@Injectable()
+export class CustomersRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  // Create a new customer
+  async create(createCustomerDto: CreateCustomerDto): Promise<Customer> {
+    const newCustomer = await this.prisma.customer.create({
+      data: createCustomerDto,
+    });
+
+    return newCustomer;
+  }
+
+  // Find all customers
+  async findAll(): Promise<Customer[]> {
+    const customers = await this.prisma.customer.findMany();
+
+    return customers;
+  }
+
+  // Find a customer by id
+  async findById(id: string): Promise<Customer | null> {
+    const customer = await this.prisma.customer.findUnique({ where: { id } });
+
+    return customer;
+  }
+
+  // Find a customer by phone
+  async findByPhone(phone: string): Promise<Customer | null> {
+    const customer = await this.prisma.customer.findUnique({
+      where: { phone },
+    });
+    return customer;
+  }
+
+  // Find a customer by email
+  async findByEmail(email: string): Promise<Customer | null> {
+    const customer = await this.prisma.customer.findUnique({
+      where: { email },
+    });
+    return customer;
+  }
+
+  // Find a customer by id for appointments
+  // async findByIdAppointment(id: string): Promise<Customer[]> {
+  //   const appointments = await this.prisma.customer.findMany({ where: { id } });
+  //   return appointments;
+  // }
+
+  // Update a customer
+  async update(
+    id: string,
+    updateCustomerDto: CreateCustomerDto,
+  ): Promise<Customer> {
+    return this.prisma.customer.update({
+      where: { id },
+      data: updateCustomerDto,
+    });
+  }
+}

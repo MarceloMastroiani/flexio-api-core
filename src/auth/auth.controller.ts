@@ -3,15 +3,13 @@ import {
   Get,
   Post,
   Body,
-  HttpCode,
   Param,
   Request,
   UseGuards,
-  Logger,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { LoginDto } from './dto/login-auth.dto';
+
 import { User } from 'generated/prisma/client';
 import { LocalAuthGuard } from '../common/guards/local-auth.guard';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -27,7 +25,7 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req: { user: User }) {
+  async login(@Request() req: { user: Omit<User, 'password'> }) {
     return this.authService.login(req.user);
   }
 
@@ -43,7 +41,6 @@ export class AuthController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  @HttpCode(201)
   createUser(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.createUser(createAuthDto);
   }
@@ -51,13 +48,11 @@ export class AuthController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  @HttpCode(200)
   findAllUsers() {
     return this.authService.findAllUsers();
   }
 
   @Get(':id')
-  @HttpCode(200)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   findOneUser(@Param('id') id: string) {

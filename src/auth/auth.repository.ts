@@ -21,46 +21,25 @@ export class AuthRepository {
       },
     });
 
-    if (!newUser) {
-      throw new HttpException(
-        'Failed to create user',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-
     return newUser;
   }
 
   async findAll(): Promise<User[]> {
     const users = await this.prisma.user.findMany();
 
-    if (!users) {
-      throw new HttpException(
-        'Failed to find users',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-
     return users;
   }
 
-  async findOne(id: string): Promise<User> {
+  async findOne(id: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
-
-    if (!user) {
-      throw new HttpException(
-        'Failed to find user',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
 
     return user;
   }
 
   // Find a user by email
-  async findOneByEmail(email: string): Promise<User> {
+  async findOneByEmail(email: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });

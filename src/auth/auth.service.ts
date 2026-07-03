@@ -26,7 +26,7 @@ export class AuthService {
     throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
   }
 
-  async login(user: User) {
+  async login(user: Omit<User, 'password'>) {
     const payload = { email: user.email, sub: user.id, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),
@@ -37,14 +37,40 @@ export class AuthService {
   // USER
   // ============================================================
   async createUser(createAuthDto: CreateAuthDto) {
-    return this.authRepository.create(createAuthDto);
+    const newUser = await this.authRepository.create(createAuthDto);
+
+    if (!newUser) {
+      throw new HttpException(
+        'Failed to create user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    return newUser;
   }
 
   async findAllUsers() {
-    return this.authRepository.findAll();
+    const users = await this.authRepository.findAll();
+
+    if (!users) {
+      throw new HttpException(
+        'Failed to find users',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return users;
   }
 
   async findOneUser(id: string) {
-    return this.authRepository.findOne(id);
+    const user = await this.authRepository.findOne(id);
+
+    if (!user) {
+      throw new HttpException(
+        'Failed to find user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return user;
   }
 }
