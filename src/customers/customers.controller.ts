@@ -54,13 +54,13 @@ export class CustomersController {
   //   return this.customersService.findCustomerAppointments(id);
   // }
 
-  // @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles('ADMIN')
-  // @Patch(':id')
-  // updateCustomer(
-  //   @Param('id') id: string,
-  //   @Body() updateCustomerDto: UpdateCustomerDto,
-  // ) {
-  //   return this.customersService.updateCustomer(id, updateCustomerDto);
-  // }
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Patch(':id')
+  updateCustomer(
+    @Param('id') id: string,
+    @Body() updateCustomerDto: UpdateCustomerDto,
+  ) {
+    return this.customersService.updateCustomer(id, updateCustomerDto);
+  }
 }

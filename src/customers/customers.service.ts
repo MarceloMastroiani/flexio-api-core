@@ -74,7 +74,16 @@ export class CustomersService {
   //   return appointments;
   // }
 
-  // updateCustomer(id: string, updateCustomerDto: UpdateCustomerDto) {
-  //   return this.customersRepository.update(id, updateCustomerDto);
-  // }
+  updateCustomer(id: string, updateCustomerDto: UpdateCustomerDto) {
+    const updatedCustomer = this.customersRepository.update(
+      id,
+      updateCustomerDto,
+    );
+
+    if (!updatedCustomer) {
+      throw new HttpException('Customer not found', HttpStatus.NOT_FOUND);
+    }
+
+    return updatedCustomer;
+  }
 }

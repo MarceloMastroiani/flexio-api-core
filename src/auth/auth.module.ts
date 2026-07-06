@@ -16,7 +16,7 @@ import { envs } from '../common/configs/envs';
     PassportModule,
     JwtModule.register({
       secret: envs.jwtSecret,
-      signOptions: { expiresIn: '60s' }, // TODO: Cambiar a '1h' o '7d'
+      signOptions: { expiresIn: '1h' }, // TODO: Cambiar a '2h' o '4h'
     }),
   ],
   controllers: [AuthController],
