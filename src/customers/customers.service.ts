@@ -3,10 +3,14 @@ import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { CustomersRepository } from './customers.repository';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class CustomersService {
-  constructor(private readonly customersRepository: CustomersRepository) {}
+  constructor(
+    private readonly customersRepository: CustomersRepository,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async createCustomer(createCustomerDto: CreateCustomerDto) {
     // Verificar si el teléfono ya existe
@@ -38,6 +42,22 @@ export class CustomersService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+
+    //   await this.notificationsService.sendEmail(
+    //     newCustomer.email ?? '',
+    //     'Turno creado',
+    //     `
+    // Hola ${newCustomer.name} 👋
+
+    // Tu turno fue confirmado correctamente.
+
+    // 📅 Fecha: 12/07/2026
+    // 🕒 Hora: 15:30
+    // 💇 Servicio: Corte de pelo
+
+    // ¡Te esperamos!
+    // `,
+    //   );
 
     return newCustomer;
   }
@@ -73,5 +93,15 @@ export class CustomersService {
     }
 
     return updatedCustomer;
+  }
+
+  async removeCustomer(id: string) {
+    const removedCustomer = await this.customersRepository.remove(id);
+
+    if (!removedCustomer) {
+      throw new HttpException('Customer not found', HttpStatus.NOT_FOUND);
+    }
+
+    return removedCustomer;
   }
 }

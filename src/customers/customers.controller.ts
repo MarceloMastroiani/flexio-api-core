@@ -68,4 +68,11 @@ export class CustomersController {
   ) {
     return this.customersService.updateCustomer(id, updateCustomerDto);
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Delete(':id')
+  removeCustomer(@Param('id') id: string) {
+    return this.customersService.removeCustomer(id);
+  }
 }
