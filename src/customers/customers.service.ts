@@ -62,18 +62,6 @@ export class CustomersService {
     return customer;
   }
 
-  // Buscar turnos de un cliente por su ID
-  // async findCustomerAppointments(id: string) {
-
-  //   const appointments = await this.customersRepository.findByIdAppointment(id);
-
-  //   if (!appointments) {
-  //     throw new HttpException('No appointments found', HttpStatus.NOT_FOUND);
-  //   }
-
-  //   return appointments;
-  // }
-
   updateCustomer(id: string, updateCustomerDto: UpdateCustomerDto) {
     const updatedCustomer = this.customersRepository.update(
       id,

@@ -26,7 +26,10 @@ export class CustomersController {
     return this.customersService.createCustomer(createCustomerDto);
   }
 
+  // HACER EN EL APPOINTMENTS (FLEXIO VERTICAL)
+  // POST /appointments — Creación implícita
   // Creación implícita en POST /appointments — para el flujo normal de reserva, que es el caso de uso más frecuente y no debería requerir dos requests separados del frontend.
+  // @Post('appointments')
   // async createAppointment(dto: CreateAppointmentDto) {
   //   return ' ';
   //   // Se crea automáticamente el cliente si no existe, y luego se manda al AppointmentService para crear el turno con el Customer.id y ...dto con los datos del turno
@@ -46,7 +49,9 @@ export class CustomersController {
     return this.customersService.findOneCustomer(id);
   }
 
-  //TODO: Seguramente vamos a tener que hacer el servicio de Appointments para seguir esta parte
+  // HACER EN EL APPOINTMENTS (FLEXIO VERTICAL)
+  // GET /customers/:id/appointments -> turnos del cliente
+  //
   // @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles('ADMIN')
   // @Get(':id/appointments')

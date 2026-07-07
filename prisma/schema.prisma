@@ -36,7 +36,6 @@ model Customer {
   firstVisitAt DateTime  @default(now())
   lastVisitAt  DateTime?
   payments     Payment[]
-  // Agregar "appointments"/"equipo" si el flexio-vertical lo usa
 }
 
 // Pagos

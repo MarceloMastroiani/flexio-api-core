@@ -47,12 +47,6 @@ export class CustomersRepository {
     return customer;
   }
 
-  // Find a customer by id for appointments
-  // async findByIdAppointment(id: string): Promise<Customer[]> {
-  //   const appointments = await this.prisma.customer.findMany({ where: { id } });
-  //   return appointments;
-  // }
-
   // Update a customer
   async update(
     id: string,
