@@ -7,7 +7,7 @@ interface EnvVars {
   JWT_SECRET: string;
   RESEND_API_KEY: string;
   RESEND_FROM_EMAIL: string;
-  // CORS_ORIGIN: string;
+  CORS_ORIGIN: string;
 }
 
 const envsSchema = Joi.object({
@@ -16,7 +16,7 @@ const envsSchema = Joi.object({
   JWT_SECRET: Joi.string().required(),
   RESEND_API_KEY: Joi.string().required(),
   RESEND_FROM_EMAIL: Joi.string().email().required(),
-  // CORS_ORIGIN: Joi.string().required(),
+  CORS_ORIGIN: Joi.string().required(),
 }).unknown(true);
 
 const { error, value } = envsSchema.validate(process.env);
@@ -33,5 +33,5 @@ export const envs = {
   jwtSecret: envsVars.JWT_SECRET,
   resendApiKey: envsVars.RESEND_API_KEY,
   resendFromEmail: envsVars.RESEND_FROM_EMAIL,
-  // corsOrigin: envsVars.CORS_ORIGIN,
+  corsOrigin: envsVars.CORS_ORIGIN,
 };

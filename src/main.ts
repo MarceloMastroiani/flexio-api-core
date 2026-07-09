@@ -7,6 +7,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('mainFlexio');
+
+  // ======== Swagger ========
   const config = new DocumentBuilder()
     .setTitle('Flexio API')
     .setDescription('The Flexio API description')
@@ -15,7 +17,13 @@ async function bootstrap() {
     .build();
   const documentFactory = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('apiDoc', app, documentFactory);
+  // =========================
 
+  // Configuración de CORS
+  app.enableCors({
+    origin: envs.corsOrigin,
+    credentials: true,
+  });
 
   app.setGlobalPrefix('api');
 

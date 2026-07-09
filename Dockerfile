@@ -6,9 +6,7 @@ WORKDIR /usr/src/app
 RUN corepack enable && corepack prepare pnpm@11.10.0 --activate
 
 # Copiamos únicamente los archivos necesarios para instalar dependencias
-COPY package.json pnpm-lock.yaml ./
-
-RUN pnpm config set unsafe-perm true
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Instalamos dependencias
 RUN pnpm install --frozen-lockfile

@@ -43,22 +43,6 @@ export class CustomersService {
       );
     }
 
-    //   await this.notificationsService.sendEmail(
-    //     newCustomer.email ?? '',
-    //     'Turno creado',
-    //     `
-    // Hola ${newCustomer.name} 👋
-
-    // Tu turno fue confirmado correctamente.
-
-    // 📅 Fecha: 12/07/2026
-    // 🕒 Hora: 15:30
-    // 💇 Servicio: Corte de pelo
-
-    // ¡Te esperamos!
-    // `,
-    //   );
-
     return newCustomer;
   }
 
