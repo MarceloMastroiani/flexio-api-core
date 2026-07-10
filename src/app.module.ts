@@ -4,9 +4,10 @@ import { PrismaModule } from './common/prisma/prisma.module';
 import { CustomersModule } from './customers/customers.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CashModule } from './cash/cash.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, CustomersModule, NotificationsModule, ScheduleModule.forRoot()],
+  imports: [ScheduleModule.forRoot(), AuthModule, PrismaModule, CustomersModule, NotificationsModule, CashModule],
   controllers: [],
   providers: [],
 })
