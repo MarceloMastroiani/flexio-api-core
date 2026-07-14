@@ -13,6 +13,8 @@ datasource db {
   provider = "postgresql"
 }
 
+// ── Enums ────────────────────────────────────────────────────────────────────
+
 enum Role {
   ADMIN
   STAFF
@@ -25,76 +27,87 @@ enum AppointmentStatus {
   CANCELLED
 }
 
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  CARD
+  MERCADOPAGO
+}
+
+// ── Modelos del core ─────────────────────────────────────────────────────────
+
 // Administrador y Staff
+// User (cuenta de login)
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String    @id @default(uuid())
+  email     String    @unique
   password  String
   role      Role
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  employee  Employee?
 }
 
 // Clientes
 model Customer {
-  id           String    @id @default(uuid())
+  id           String        @id @default(uuid())
   name         String
-  phone        String?   @unique
-  email        String?   @unique
-  firstVisitAt DateTime  @default(now())
+  phone        String?       @unique
+  email        String?       @unique
+  firstVisitAt DateTime      @default(now())
   lastVisitAt  DateTime?
-  payments     Payment[]
   appointments Appointment[]
 }
 
-// Pagos
-model Payment {
-  id         String   @id @default(uuid())
-  amount     Decimal
-  method     String
-  notes      String?
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
-  createdAt  DateTime @default(now())
-}
-
+// Configuración del negocio (clave/valor)
 model ConfigEntry {
   key   String @id
   value String
 }
 
-// ===== Modelo stub — estructura definida, lógica en el vertical =====
+// ── Modelos del vertical peluquería ──────────────────────────────────────────
 
-model Appointment {
-  id              String            @id @default(uuid())
-
-  startsAt        DateTime
-  endsAt          DateTime
-  reminderSentAt  DateTime?
-
-  status          AppointmentStatus @default(PENDING)
-  notes           String?
-
-  customerId      String
-  customer        Customer          @relation(fields: [customerId], references: [id])
-
-  employeeId      String
-  employee        Employee          @relation(fields: [employeeId], references: [id])
-
-  serviceId       String
-  service         Service           @relation(fields: [serviceId], references: [id])
-}
-
+// Employee (peluquero)
 model Employee {
-  id          String   @id @default(uuid())
-  name        String
+  id           String        @id @default(uuid())
+  name         String
+  email        String?       @unique
   availability Json
+  userId       String?       @unique
+  user         User?         @relation(fields: [userId], references: [id])
   appointments Appointment[]
 }
 
 model Service {
-  id          String   @id @default(uuid())
-  name        String
-  duration    Int
-  price       Decimal
+  id           String        @id @default(uuid())
+  name         String
+  duration     Int           // minutos
+  price        Decimal
   appointments Appointment[]
+}
+
+model Appointment {
+  id             String            @id @default(uuid())
+  startsAt       DateTime
+  endsAt         DateTime
+  reminderSentAt DateTime?
+  status         AppointmentStatus @default(PENDING)
+  notes          String?
+  customerId     String
+  customer       Customer          @relation(fields: [customerId], references: [id])
+  employeeId     String
+  employee       Employee          @relation(fields: [employeeId], references: [id])
+  serviceId      String
+  service        Service           @relation(fields: [serviceId], references: [id])
+  payment        Payment?
+}
+
+// Relación uno a uno: un turno = un cobro
+model Payment {
+  id            String        @id @default(uuid())
+  amount        Decimal
+  method        PaymentMethod
+  notes         String?
+  paidAt        DateTime      @default(now())
+  appointmentId String        @unique
+  appointment   Appointment   @relation(fields: [appointmentId], references: [id])
 }

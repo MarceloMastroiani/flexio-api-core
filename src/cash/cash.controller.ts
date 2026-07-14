@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { CashService } from './cash.service';
 import { CreateCashDto } from './dto/create-cash.dto';
 import { UpdateCashDto } from './dto/update-cash.dto';
@@ -7,20 +7,31 @@ import { UpdateCashDto } from './dto/update-cash.dto';
 export class CashController {
   constructor(private readonly cashService: CashService) {}
 
-  @Post()
-  create(@Body() createCashDto: CreateCashDto) {
-    return this.cashService.create(createCashDto);
+  @Post(":id")
+  createPayments(@Param('id') id: string, @Body() createCashDto: CreateCashDto) {
+    return this.cashService.createPayments(id, createCashDto);
   }
 
   @Get()
-  findAll() {
-    return this.cashService.findAll();
+  findAllPayments() {
+    return this.cashService.findAllPayments();
+  }
+
+  @Get('payments')
+  dailyPayments(@Query("date") date: string) {
+    return this.cashService.dailyPayments(date);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.cashService.findOne(+id);
+  findOnePayment(@Param('id') id: string) {
+    return this.cashService.findById(id);
   }
+
+  @Get('customer/:customerId')
+  findPaymentsByCustomerId(@Param('customerId') customerId: string) {
+    return this.cashService.findByCustomerId(customerId);
+  }
+
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateCashDto: UpdateCashDto) {
