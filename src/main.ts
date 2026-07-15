@@ -5,6 +5,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 // INFO: Tarea pendiente en /cash.controller.ts
+// INFO: Tarea pendiente en /reports.controller.ts
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

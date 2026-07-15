@@ -5,9 +5,10 @@ import { CustomersModule } from './customers/customers.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CashModule } from './cash/cash.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), AuthModule, PrismaModule, CustomersModule, NotificationsModule, CashModule],
+  imports: [ScheduleModule.forRoot(), AuthModule, PrismaModule, CustomersModule, NotificationsModule, CashModule, ReportsModule],
   controllers: [],
   providers: [],
 })
