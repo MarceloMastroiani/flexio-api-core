@@ -1,12 +1,13 @@
-import { IsString, IsOptional } from "class-validator";
+import { PaymentMethod } from "@/generated/prisma/client";
+import { IsString, IsOptional, IsEnum, IsNumber } from "class-validator";
 
 export class CreateCashDto {
 
-  @IsString()
+  @IsNumber()
   amount: number;
 
-  @IsString()
-  method: string;
+  @IsEnum(PaymentMethod)
+  method: PaymentMethod;
 
   @IsString()
   @IsOptional()

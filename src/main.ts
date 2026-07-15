@@ -4,6 +4,8 @@ import { envs } from './common/configs/envs';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
+// INFO: Tarea pendiente en /cash.controller.ts
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('mainFlexio');

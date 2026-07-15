@@ -3,13 +3,11 @@ import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { CustomersRepository } from './customers.repository';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class CustomersService {
   constructor(
     private readonly customersRepository: CustomersRepository,
-    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createCustomer(createCustomerDto: CreateCustomerDto) {

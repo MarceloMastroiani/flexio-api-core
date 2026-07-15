@@ -17,13 +17,17 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.authRepository.findOneByEmail(email);
-    const passwordMatch = await comparePassword(password, user.password);
-
-    if (user && passwordMatch) {
-      const { password, ...result } = user;
-      return result;
+    if (!user) {
+       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
-    throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+
+    const passwordMatch = await comparePassword(password, user.password);
+    if (!passwordMatch) {
+        throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+      }
+
+    const { password: _ , ...result } = user;
+    return result;
   }
 
   async login(user: Omit<User, 'password'>) {

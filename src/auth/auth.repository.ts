@@ -39,17 +39,10 @@ export class AuthRepository {
   }
 
   // Find a user by email
-  async findOneByEmail(email: string): Promise<User> {
+  async findOneByEmail(email: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
-
-    if (!user) {
-      throw new HttpException(
-        'Failed to find user',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
 
     return user;
   }
