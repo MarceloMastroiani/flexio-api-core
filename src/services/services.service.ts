@@ -20,7 +20,6 @@ export class ServicesService {
     return newService;
   }
 
-
   // Find all services
   async findAllServices() {
     const services = await this.serviceRepository.findAllServices();

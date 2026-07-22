@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
+import { EmployeesRepository } from './employees.repository';
 
 @Injectable()
 export class EmployeesService {
+  constructor(private readonly employeesRepository: EmployeesRepository) { }
+
   create(createEmployeeDto: CreateEmployeeDto) {
     return 'This action adds a new employee';
   }

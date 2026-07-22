@@ -7,6 +7,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 // NOTE: Este proyecto paso a ser core + vertical en uno. Cuando haya un segundo vertical se creará un nuevo core + vertical.
 
 // INFO: Tarea pendiente en /appointments.controller.ts (primero crear Services y Employees)
+  // Services ✔️ | Employees ❌
+    // TODO: Tareas pendientes en /employees.controller.ts
+    //
 // INFO: Tarea pendiente en /cash.controller.ts
 // INFO: Tarea pendiente en /reports.controller.ts (Crear una vez este el de Appointments)
 
