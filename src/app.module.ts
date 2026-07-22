@@ -6,9 +6,12 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CashModule } from './cash/cash.module';
 import { ReportsModule } from './reports/reports.module';
+import { AppointmentsModule } from './appointments/appointments.module';
+import { ServicesModule } from './services/services.module';
+import { EmployeesModule } from './employees/employees.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), AuthModule, PrismaModule, CustomersModule, NotificationsModule, CashModule, ReportsModule],
+  imports: [ScheduleModule.forRoot(), AuthModule, PrismaModule, CustomersModule, NotificationsModule, CashModule, ReportsModule, AppointmentsModule, ServicesModule, EmployeesModule],
   controllers: [],
   providers: [],
 })

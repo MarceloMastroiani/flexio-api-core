@@ -4,8 +4,11 @@ import { envs } from './common/configs/envs';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
+// NOTE: Este proyecto paso a ser core + vertical en uno. Cuando haya un segundo vertical se creará un nuevo core + vertical.
+
+// INFO: Tarea pendiente en /appointments.controller.ts (primero crear Services y Employees)
 // INFO: Tarea pendiente en /cash.controller.ts
-// INFO: Tarea pendiente en /reports.controller.ts
+// INFO: Tarea pendiente en /reports.controller.ts (Crear una vez este el de Appointments)
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
