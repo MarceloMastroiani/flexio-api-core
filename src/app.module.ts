@@ -11,7 +11,18 @@ import { ServicesModule } from './services/services.module';
 import { EmployeesModule } from './employees/employees.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), AuthModule, PrismaModule, CustomersModule, NotificationsModule, CashModule, ReportsModule, AppointmentsModule, ServicesModule, EmployeesModule],
+  imports: [
+    ScheduleModule.forRoot(),
+    AuthModule,
+    PrismaModule,
+    CustomersModule,
+    NotificationsModule,
+    CashModule,
+    ReportsModule,
+    AppointmentsModule,
+    ServicesModule,
+    EmployeesModule,
+  ],
   controllers: [],
   providers: [],
 })
