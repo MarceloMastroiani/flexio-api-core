@@ -60,7 +60,7 @@ export class CashRepository {
       },
       include: {
         appointment: {
-            include: { service: true, customer: true },
+            include: { services: true, customer: true },
         },
       },
     });

@@ -37,14 +37,24 @@ export class EmployeesService {
 
   }
 
-  findAll() {
-    const employees = this.employeesRepository.findAll();
+  async findAllEmployees() {
+    const employees = await this.employeesRepository.findAllEmployees();
 
     if (!employees) {
       throw new HttpException('Failed to find employees', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     return employees;
+  }
+
+  async findOneEmployee(id: string) {
+    const employee = await this.employeesRepository.findOneEmployee(id);
+
+    if (!employee) {
+      throw new HttpException('Failed to find employee', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    return employee;
   }
 
   updateEmployee(id: string, updateEmployeeDto: UpdateEmployeeDto) {

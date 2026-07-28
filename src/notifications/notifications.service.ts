@@ -16,7 +16,7 @@ export class NotificationsService {
       include: {
         customer: true,   // para el nombre y email del cliente
         employee: true,   // para el nombre del profesional
-        service: true,    // para el nombre del servicio
+        services: { include: { service: true } },    // para el nombre del servicio
       },
     });
 
@@ -28,7 +28,7 @@ export class NotificationsService {
       appointment.customer.email,
       {
         customerName: appointment.customer.name,
-        serviceName: appointment.service.name,
+        serviceName: appointment.services.map((s) => s.service.name).join(', '),
         employeeName: appointment.employee.name,
         date: appointment.startsAt.toLocaleDateString('es-AR'),
         time: appointment.startsAt.toLocaleTimeString('es-AR', {
@@ -46,7 +46,7 @@ export class NotificationsService {
       include: {
         customer: true,
         employee: true,
-        service: true,
+        services: { include: { service: true } },
       },
     });
 
@@ -58,7 +58,7 @@ export class NotificationsService {
       appointment.customer.email,
       {
         customerName: appointment.customer.name,
-        serviceName: appointment.service.name,
+        serviceName: appointment.services.map((s) => s.service.name).join(', '),
         employeeName: appointment.employee.name,
         date: appointment.startsAt.toLocaleDateString('es-AR'),
         time: appointment.startsAt.toLocaleTimeString('es-AR', {

@@ -46,7 +46,7 @@ export class NotificationsCron {
       include: {
         customer: true,
         employee: true,
-        service: true,
+        services: true,
       },
     });
 

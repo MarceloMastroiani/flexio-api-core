@@ -22,9 +22,18 @@ export class EmployeesRepository {
     return newEmployee;
   }
 
-  async findAll(): Promise<Employee[]> {
+  async findAllEmployees(): Promise<Employee[]> {
     const employees = await this.prisma.employee.findMany();
     return employees;
+  }
+
+  async findOneEmployee(id: string): Promise<Employee | null> {
+
+    const employee = await this.prisma.employee.findUnique({
+      where: { id },
+    });
+
+    return employee;
   }
 
   async deleteEmployee(id: string): Promise<Employee> {

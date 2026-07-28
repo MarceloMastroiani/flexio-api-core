@@ -22,7 +22,7 @@ export class EmployeesController {
   @Roles('ADMIN')
   @Get()
   findAll() {
-    return this.employeesService.findAll();
+    return this.employeesService.findAllEmployees();
   }
 
   @Patch(':id')

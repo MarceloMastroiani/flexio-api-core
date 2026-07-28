@@ -31,6 +31,27 @@ export class ServicesService {
     return services
   }
 
+  // Find a service by id
+  async findOneService(id: string) {
+    const service = await this.serviceRepository.findOneService(id);
+
+    if(!service) {
+      throw new HttpException('Service not found', HttpStatus.NOT_FOUND);
+    }
+
+    return service;
+  }
+
+  async findServicesByIds(ids: string[]) {
+    const services = await this.serviceRepository.findServicesByIds(ids);
+
+    if(!services) {
+      throw new HttpException('No services found', HttpStatus.NOT_FOUND);
+    }
+
+    return services;
+  }
+
   // Update a service
   async updateService(id: string, updateServiceDto: UpdateServiceDto) {
     const updatedService = await this.serviceRepository.updateService(id, updateServiceDto);
