@@ -16,6 +16,7 @@ export class AppointmentsService {
     private readonly servicesService: ServicesService) {
   }
 
+  // Crea un nuevo turno
   async createAppointment(createAppointmentDto: CreateAppointmentDto) {
 
     // Verify employee, customer, and service
@@ -60,35 +61,68 @@ export class AppointmentsService {
       });
     } catch (error) {
       if (
-             error instanceof Prisma.PrismaClientKnownRequestError &&
-             String(error.meta?.message ?? '').includes('no_overlapping_appointments')
-           ) {
-             throw new ConflictException('Ese horario ya está ocupado para este empleado');
-           }
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        String(error.meta?.message ?? '').includes('no_overlapping_appointments')
+      ) {
+        throw new ConflictException('Ese horario ya está ocupado para este empleado');
+      }
       throw error;
 
     }
   }
 
+
+  findAvailableAppointments() {
+    const appointments = this.appointmentsRepository.findAvailableAppointments();
+
+    if (!appointments) {
+      throw new HttpException('No available appointments found', HttpStatus.NOT_FOUND);
+    }
+    return appointments;
+  }
+
+  // Obtiene todos los turnos
   findAllAppointments() {
     const appointments = this.appointmentsRepository.findAllAppointments();
 
-    if(!appointments) {
+    if (!appointments) {
       throw new HttpException('No appointments found', HttpStatus.NOT_FOUND);
     }
 
     return appointments;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} appointment`;
+  // Obtiene todos los turnos de hoy
+  findToday() {
+    const appointmentsToday = this.appointmentsRepository.findToday();
+
+    if (!appointmentsToday) {
+      throw new HttpException('No appointments found', HttpStatus.NOT_FOUND);
+    }
+
+    return appointmentsToday;
   }
 
-  update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
-    return `This action updates a #${id} appointment`;
+  // Actualiza el estado de un turno
+  async updateStatusAppointment(id: string, updateAppointmentDto: UpdateAppointmentDto) {
+    const updatedAppointment = await this.appointmentsRepository.updateStatusAppointment(id, updateAppointmentDto)
+
+    if (!updatedAppointment) {
+      throw new HttpException('Appointment not found', HttpStatus.NOT_FOUND);
+    }
+
+    return updatedAppointment;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} appointment`;
+  // Elimina un turno por su ID
+  async removeAppointment(id: string) {
+    const deletedAppointment = await this.appointmentsRepository.removeAppointment(id);
+
+    if (!deletedAppointment) {
+      throw new HttpException('Appointment not found', HttpStatus.NOT_FOUND);
+    }
+
+    return deletedAppointment
   }
+
 }

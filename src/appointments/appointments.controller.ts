@@ -6,9 +6,11 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 // TODO: Crear todos los endpoints
   // TODO:
   // POST ✔️
+  // GET ❌
   // GET ✔️
-  // PATCH ❌
-  // DELETE ❌
+  // GET ✔️
+  // PATCH ✔️
+  // DELETE ✔️
 @Controller('appointments')
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
@@ -28,28 +30,34 @@ export class AppointmentsController {
      */
   }
 
+  // TODO: Terminar este endpoint
+  // Obtiene los turnos disponibles (público)
+  @Get('available')
+  findAvailableAppointments() {
+    return this.appointmentsService.findAvailableAppointments();
+  }
+
+  // Obtiene todos los turnos (admin)
   @Get()
   findAllAppointments() {
     return this.appointmentsService.findAllAppointments();
   }
 
-
-
-
-
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.appointmentsService.findOne(+id);
+  // Obtiene un turno por su ID (admin/staff)
+  @Get('today')
+  findToday() {
+    return this.appointmentsService.findToday();
   }
 
+  // Actualiza el estado de un turno (admin)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAppointmentDto: UpdateAppointmentDto) {
-    return this.appointmentsService.update(+id, updateAppointmentDto);
+  updateStatusAppointment(@Param('id') id: string, @Body() updateAppointmentDto: UpdateAppointmentDto) {
+    return this.appointmentsService.updateStatusAppointment(id, updateAppointmentDto);
   }
 
+  // Elimina un turno (admin)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.appointmentsService.remove(+id);
+  removeAppointment(@Param('id') id: string) {
+    return this.appointmentsService.removeAppointment(id);
   }
 }
