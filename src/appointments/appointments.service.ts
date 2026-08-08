@@ -6,6 +6,8 @@ import { EmployeesService } from '../employees/employees.service';
 import { CustomersService } from '../customers/customers.service';
 import { ServicesService } from '../services/services.service';
 import { Prisma } from '@/generated/prisma/client';
+import { GetAvailableSlotsDto } from './dto/get-available-slots.dto';
+import { calculateAvailableSlots } from './helpers/availability.helper';
 
 @Injectable()
 export class AppointmentsService {
@@ -14,6 +16,45 @@ export class AppointmentsService {
     private readonly employeesService: EmployeesService,
     private readonly customersService: CustomersService,
     private readonly servicesService: ServicesService) {
+  }
+
+  // Obtiene los horarios disponibles para un empleado y un servicio en una fecha específica
+  async getAvailableSlots(getAvailableSlotsDto: GetAvailableSlotsDto) {
+    const { employeeId, serviceId, date } = getAvailableSlotsDto;
+
+    const employee = await this.appointmentsRepository.getEmployeeWithAvailability(employeeId);
+    if (!employee) {
+      throw new HttpException('Employee not found', HttpStatus.NOT_FOUND);
+    }
+
+    const service = await this.appointmentsRepository.getServiceDuration(serviceId);
+    if (!service) {
+      throw new HttpException('Service not found', HttpStatus.NOT_FOUND);
+    }
+
+    const targetDate = new Date(date);
+    const dayStart = new Date(Date.UTC(
+      targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate(), 0, 0, 0, 0,
+    ));
+    const dayEnd = new Date(Date.UTC(
+      targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate(), 23, 59, 59, 999,
+    ));
+
+    const busyAppointments = await this.appointmentsRepository.getBusyAppointments(
+      employeeId, dayStart, dayEnd,
+    );
+
+    const busyRanges = busyAppointments.map((a) => ({
+      start: a.startsAt,
+      end: a.endsAt,
+    }));
+
+    return calculateAvailableSlots(
+      dayStart,
+      employee.availability as Record<string, { start: string; end: string }[]>,
+      service.duration,
+      busyRanges,
+    );
   }
 
   // Crea un nuevo turno

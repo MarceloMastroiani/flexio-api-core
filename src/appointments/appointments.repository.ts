@@ -26,6 +26,34 @@ export class AppointmentsRepository {
   constructor(private readonly prisma: PrismaService) {
   }
 
+// ==============================================
+
+  async getEmployeeWithAvailability(employeeId: string) {
+    return this.prisma.employee.findUnique({
+      where: { id: employeeId },
+    });
+  }
+
+  async getServiceDuration(serviceId: string) {
+    return this.prisma.service.findUnique({
+      where: { id: serviceId },
+      select: { duration: true },
+    });
+  }
+
+  async getBusyAppointments(employeeId: string, dayStart: Date, dayEnd: Date) {
+    return this.prisma.appointment.findMany({
+      where: {
+        employeeId,
+        status: { in: ['PENDING', 'CONFIRMED'] }, // CANCELLED no bloquea
+        startsAt: { gte: dayStart, lte: dayEnd },
+      },
+      select: { startsAt: true, endsAt: true },
+    });
+  }
+
+// ==============================================
+
   async checkAvailability(employeeId: string, startsAt: Date, endsAt: Date): Promise<boolean> {
 
     const conflicts = await this.prisma.$queryRaw<{ id: string }[]>`

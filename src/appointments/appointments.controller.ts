@@ -1,19 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { GetAvailableSlotsDto } from './dto/get-available-slots.dto';
 
-// TODO: Crear todos los endpoints
-  // TODO:
-  // POST ✔️
-  // GET ❌
-  // GET ✔️
-  // GET ✔️
-  // PATCH ✔️
-  // DELETE ✔️
+
 @Controller('appointments')
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) {}
+  constructor(private readonly appointmentsService: AppointmentsService) { }
+
+  // Obtiene los horarios disponibles para un empleado y un servicio en una fecha específica
+  @Get('available')
+  getAvailableSlots(@Query() getAvailableSlotsDto: GetAvailableSlotsDto) {
+    return this.appointmentsService.getAvailableSlots(getAvailableSlotsDto);
+  }
 
   // Crea un nuevo turno (público)
   @Post()
