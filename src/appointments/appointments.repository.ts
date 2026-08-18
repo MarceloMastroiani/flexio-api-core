@@ -34,10 +34,10 @@ export class AppointmentsRepository {
     });
   }
 
-  async getServiceDuration(serviceId: string) {
-    return this.prisma.service.findUnique({
-      where: { id: serviceId },
-      select: { duration: true },
+  async getServicesDurations(serviceIds: string[]) {
+    return this.prisma.service.findMany({
+      where: { id: { in: serviceIds } },
+      select: { id: true, duration: true },
     });
   }
 

@@ -5,7 +5,6 @@ import { AppointmentsRepository } from './appointments.repository';
 import { ServicesModule } from '../services/services.module';
 import { EmployeesModule } from '../employees/employees.module';
 import { CustomersModule } from '../customers/customers.module';
-import { CustomersService } from '../customers/customers.service';
 
 @Module({
   imports: [ServicesModule, EmployeesModule, CustomersModule],

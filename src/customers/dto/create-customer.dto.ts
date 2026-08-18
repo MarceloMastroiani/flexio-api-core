@@ -1,16 +1,14 @@
-import { IsNotEmpty, IsString, ValidateIf } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateCustomerDto {
   @IsString()
   name: string;
 
-  @ValidateIf((dto) => !dto.email)
-  @IsNotEmpty({ message: 'Debe proporcionar teléfono o email' })
+  @IsNotEmpty({ message: 'Debe proporcionar teléfono y email' })
   @IsString()
-  phone?: string;
+  phone: string;
 
-  @ValidateIf((dto) => !dto.phone)
-  @IsNotEmpty({ message: 'Debe proporcionar teléfono o email' })
+  @IsNotEmpty({ message: 'Debe proporcionar teléfono y email' })
   @IsString()
-  email?: string;
+  email: string;
 }

@@ -51,8 +51,8 @@ model User {
 model Customer {
   id           String        @id @default(uuid())
   name         String
-  phone        String?       @unique
-  email        String?       @unique
+  phone        String       @unique
+  email        String       @unique
   firstVisitAt DateTime      @default(now())
   lastVisitAt  DateTime?
   appointments Appointment[]

@@ -18,8 +18,8 @@ export class EmployeesController {
     return this.employeesService.createEmployee(id, createEmployeeDto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles('ADMIN')
   @Get()
   findAll() {
     return this.employeesService.findAllEmployees();

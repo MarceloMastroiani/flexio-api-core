@@ -18,19 +18,21 @@ export class AppointmentsService {
     private readonly servicesService: ServicesService) {
   }
 
-  // Obtiene los horarios disponibles para un empleado y un servicio en una fecha específica
+  // Obtiene los horarios disponibles para un empleado y uno o más servicios en una fecha específica
   async getAvailableSlots(getAvailableSlotsDto: GetAvailableSlotsDto) {
-    const { employeeId, serviceId, date } = getAvailableSlotsDto;
+    const { employeeId, serviceIds, date } = getAvailableSlotsDto;
 
     const employee = await this.appointmentsRepository.getEmployeeWithAvailability(employeeId);
     if (!employee) {
       throw new HttpException('Employee not found', HttpStatus.NOT_FOUND);
     }
 
-    const service = await this.appointmentsRepository.getServiceDuration(serviceId);
-    if (!service) {
-      throw new HttpException('Service not found', HttpStatus.NOT_FOUND);
+    const services = await this.appointmentsRepository.getServicesDurations(serviceIds);
+    if (!services || services.length !== new Set(serviceIds).size) {
+      throw new HttpException('One or more services not found', HttpStatus.NOT_FOUND);
     }
+
+    const totalDuration = services.reduce((acc, service) => acc + service.duration, 0);
 
     const targetDate = new Date(date);
     const dayStart = new Date(Date.UTC(
@@ -52,7 +54,7 @@ export class AppointmentsService {
     return calculateAvailableSlots(
       dayStart,
       employee.availability as Record<string, { start: string; end: string }[]>,
-      service.duration,
+      totalDuration,
       busyRanges,
     );
   }

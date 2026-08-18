@@ -8,6 +8,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 // INFO: TODO Tarea pendiente en /cash.controller.ts
 // INFO: TODO Tarea pendiente en /reports.controller.ts (Crear una vez este el de Appointments)
+// INFO: TODO Tarea pendiente en /customers.controller.ts
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -36,6 +37,7 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 

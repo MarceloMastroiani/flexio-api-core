@@ -61,7 +61,7 @@ export class CustomersRepository {
   }
 
   // Remove a customer
-  async remove(id: string): Promise<Customer | null> {
+  async remove(id: string): Promise<Customer> {
     const removedCustomer = await this.prisma.customer.delete({
       where: { id },
     });
