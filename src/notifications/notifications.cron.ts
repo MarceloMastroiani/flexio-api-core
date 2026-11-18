@@ -1,7 +1,6 @@
 // Leer documentación de nest sobre:
 // CRON - https://docs.nestjs.com/techniques/task-scheduling#declarative-cron-jobs
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { NotificationsService } from './notifications.service';
 
@@ -10,8 +9,7 @@ export class NotificationsCron {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
-  ) {
-  }
+  ) {}
   private readonly logger = new Logger(NotificationsCron.name);
 
   // CRON - Se ejecuta cada hora para enviar recordatorios de turnos dentro de las 24 horas
@@ -21,18 +19,28 @@ export class NotificationsCron {
 
     const now = new Date();
 
-    const startOfTomorrow = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      0, 0, 0, 0
-    )); // Fecha de mañana a las 00:00:00
-    const endOfTomorrow = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      23, 59, 59, 999
-    )); // Fecha de mañana a las 23:59:59
+    const startOfTomorrow = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1,
+        0,
+        0,
+        0,
+        0,
+      ),
+    ); // Fecha de mañana a las 00:00:00
+    const endOfTomorrow = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1,
+        23,
+        59,
+        59,
+        999,
+      ),
+    ); // Fecha de mañana a las 23:59:59
 
     const appointments = await this.prisma.appointment.findMany({
       where: {
@@ -46,7 +54,7 @@ export class NotificationsCron {
       include: {
         customer: true,
         employee: true,
-        services: true,
+        service: true,
       },
     });
 
@@ -58,12 +66,12 @@ export class NotificationsCron {
           data: { reminderSentAt: new Date() },
         });
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
         this.logger.error(
-          `Error enviando recordatorio para turno ${appointment.id}: ${error.message}`
+          `Error enviando recordatorio para turno ${appointment.id}: ${message}`,
         );
         // No actualiza reminderSentAt → el próximo ciclo lo reintenta
       }
     }
-    }
-
   }
+}

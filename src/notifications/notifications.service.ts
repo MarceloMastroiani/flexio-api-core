@@ -6,17 +6,17 @@ import { PrismaService } from '../common/prisma/prisma.service';
 export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly resend: ResendService
-  ) { }
+    private readonly resend: ResendService,
+  ) {}
 
   // Envia una confirmación de cita al cliente
   async sendConfirmation(appointmentId: string): Promise<void> {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id: appointmentId },
       include: {
-        customer: true,   // para el nombre y email del cliente
-        employee: true,   // para el nombre del profesional
-        services: { include: { service: true } },    // para el nombre del servicio
+        customer: true, // para el nombre y email del cliente
+        employee: true, // para el nombre del profesional
+        service: true, // para el nombre del servicio
       },
     });
 
@@ -24,19 +24,16 @@ export class NotificationsService {
       throw new Error('Appointment not found');
     }
 
-    await this.resend.sendAppointmentConfirmation(
-      appointment.customer.email,
-      {
-        customerName: appointment.customer.name,
-        serviceName: appointment.services.map((s) => s.service.name).join(', '),
-        employeeName: appointment.employee.name,
-        date: appointment.startsAt.toLocaleDateString('es-AR'),
-        time: appointment.startsAt.toLocaleTimeString('es-AR', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-      }
-    )
+    await this.resend.sendAppointmentConfirmation(appointment.customer.email, {
+      customerName: appointment.customer.name,
+      serviceName: appointment.service?.name ?? 'Servicio',
+      employeeName: appointment.employee.name,
+      date: appointment.startsAt.toLocaleDateString('es-AR'),
+      time: appointment.startsAt.toLocaleTimeString('es-AR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    });
   }
 
   // Envia un recordatorio de cita al cliente
@@ -46,7 +43,7 @@ export class NotificationsService {
       include: {
         customer: true,
         employee: true,
-        services: { include: { service: true } },
+        service: true,
       },
     });
 
@@ -54,18 +51,15 @@ export class NotificationsService {
       throw new Error('Appointment not found');
     }
 
-    await this.resend.sendAppointmentReminder(
-      appointment.customer.email,
-      {
-        customerName: appointment.customer.name,
-        serviceName: appointment.services.map((s) => s.service.name).join(', '),
-        employeeName: appointment.employee.name,
-        date: appointment.startsAt.toLocaleDateString('es-AR'),
-        time: appointment.startsAt.toLocaleTimeString('es-AR', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-      }
-    )
+    await this.resend.sendAppointmentReminder(appointment.customer.email, {
+      customerName: appointment.customer.name,
+      serviceName: appointment.service?.name ?? 'Servicio',
+      employeeName: appointment.employee.name,
+      date: appointment.startsAt.toLocaleDateString('es-AR'),
+      time: appointment.startsAt.toLocaleTimeString('es-AR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    });
   }
 }

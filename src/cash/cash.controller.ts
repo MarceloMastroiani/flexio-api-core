@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CashService } from './cash.service';
 import { CreateCashDto } from './dto/create-cash.dto';
 import { UpdateCashDto } from './dto/update-cash.dto';
@@ -13,8 +23,11 @@ export class CashController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  @Post(":appointmentId")
-  createPayments(@Param('appointmentId') appointmentId: string, @Body() createCashDto: CreateCashDto) {
+  @Post(':appointmentId')
+  createPayments(
+    @Param('appointmentId') appointmentId: string,
+    @Body() createCashDto: CreateCashDto,
+  ) {
     return this.cashService.createPayments(appointmentId, createCashDto);
   }
 
@@ -22,15 +35,15 @@ export class CashController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Get('payments/day')
-  dailyPayments(@Query("date") date: string) {
+  dailyPayments(@Query('date') date: string) {
     return this.cashService.dailyPayments(date);
   }
 
   // TODO: Completar una vez terminado el Appointment
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  @Get("payments/cash-close")
-  cashClose(@Query("date") date: string) {
+  @Get('payments/cash-close')
+  cashClose(@Query('date') date: string) {
     return this.cashService.getCashClose(date);
   }
 
@@ -56,7 +69,6 @@ export class CashController {
   findPaymentsByAppointmentId(@Param('appointmentId') appointmentId: string) {
     return this.cashService.findByAppointmentId(appointmentId);
   }
-
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')

@@ -4,12 +4,10 @@ import { CustomersController } from './customers.controller';
 import { CustomersRepository } from './customers.repository';
 import { NotificationsModule } from '../notifications/notifications.module';
 
-
 @Module({
   imports: [NotificationsModule],
   controllers: [CustomersController],
   providers: [CustomersService, CustomersRepository],
   exports: [CustomersService],
-
 })
 export class CustomersModule {}

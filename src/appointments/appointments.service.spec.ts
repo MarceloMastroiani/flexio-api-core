@@ -1,0 +1,212 @@
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AppointmentsService } from './appointments.service';
+import { AppointmentsRepository } from './appointments.repository';
+import { EmployeesService } from '../employees/employees.service';
+import { CustomersService } from '../customers/customers.service';
+import { ServicesService } from '../services/services.service';
+
+// Mock del helper de disponibilidad para hacer el test determinista
+vi.mock('./helpers/availability.helper', () => ({
+  calculateAvailableSlots: vi.fn(),
+}));
+
+import { calculateAvailableSlots } from './helpers/availability.helper';
+
+describe('AppointmentsService', () => {
+  let service: AppointmentsService;
+
+  const repo = {
+    getEmployeeWithAvailability: vi.fn(),
+    getBusyAppointments: vi.fn(),
+    checkAvailability: vi.fn(),
+    createAppointment: vi.fn(),
+    findAllAppointments: vi.fn(),
+    findById: vi.fn(),
+    findToday: vi.fn(),
+    updateAppointment: vi.fn(),
+    removeAppointment: vi.fn(),
+  };
+  const employees = { findOneEmployee: vi.fn() };
+  const customers = { findOneCustomer: vi.fn() };
+  const services = { findOneService: vi.fn() };
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        AppointmentsService,
+        { provide: AppointmentsRepository, useValue: repo },
+        { provide: EmployeesService, useValue: employees },
+        { provide: CustomersService, useValue: customers },
+        { provide: ServicesService, useValue: services },
+      ],
+    }).compile();
+
+    service = moduleRef.get(AppointmentsService);
+  });
+
+  describe('createAppointment', () => {
+    const startsAt = '2026-12-02T10:00:00.000Z';
+
+    it('usa slotMinutes del empleado como duración por defecto', async () => {
+      employees.findOneEmployee.mockResolvedValue({
+        id: 'e1',
+        slotMinutes: 30,
+      });
+      customers.findOneCustomer.mockResolvedValue({ id: 'c1', name: 'X' });
+      repo.checkAvailability.mockResolvedValue(true);
+      repo.createAppointment.mockResolvedValue({ id: 'a1' });
+
+      await service.createAppointment({
+        customerId: 'c1',
+        employeeId: 'e1',
+        startsAt,
+      });
+
+      expect(repo.createAppointment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startsAt: new Date(startsAt),
+          endsAt: new Date('2026-12-02T10:30:00.000Z'),
+        }),
+      );
+    });
+
+    it('usa durationMinutes si se envía', async () => {
+      employees.findOneEmployee.mockResolvedValue({
+        id: 'e1',
+        slotMinutes: 30,
+      });
+      customers.findOneCustomer.mockResolvedValue({ id: 'c1', name: 'X' });
+      repo.checkAvailability.mockResolvedValue(true);
+      repo.createAppointment.mockResolvedValue({ id: 'a1' });
+
+      await service.createAppointment({
+        customerId: 'c1',
+        employeeId: 'e1',
+        startsAt,
+        durationMinutes: 60,
+      });
+
+      expect(repo.createAppointment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          endsAt: new Date('2026-12-02T11:00:00.000Z'),
+        }),
+      );
+    });
+
+    it('lanza 409 si el horario está ocupado', async () => {
+      employees.findOneEmployee.mockResolvedValue({
+        id: 'e1',
+        slotMinutes: 30,
+      });
+      customers.findOneCustomer.mockResolvedValue({ id: 'c1', name: 'X' });
+      repo.checkAvailability.mockResolvedValue(false);
+
+      await expect(
+        service.createAppointment({
+          customerId: 'c1',
+          employeeId: 'e1',
+          startsAt,
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('lanza 404 si el empleado no existe', async () => {
+      employees.findOneEmployee.mockResolvedValue(null);
+
+      await expect(
+        service.createAppointment({
+          customerId: 'c1',
+          employeeId: 'x',
+          startsAt,
+        }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('updateAppointment', () => {
+    const existing = {
+      id: 'a1',
+      startsAt: new Date('2026-12-02T10:00:00.000Z'),
+      endsAt: new Date('2026-12-02T10:30:00.000Z'),
+      status: 'PENDING',
+      serviceId: null,
+      customerId: 'c1',
+      employeeId: 'e1',
+    };
+
+    it('asigna un servicio mediante la relación', async () => {
+      repo.findById.mockResolvedValue(existing);
+      services.findOneService.mockResolvedValue({ id: 's1', name: 'Corte' });
+      repo.updateAppointment.mockResolvedValue({ ...existing });
+
+      await service.updateAppointment('a1', { serviceId: 's1' });
+
+      expect(services.findOneService).toHaveBeenCalledWith('s1');
+      expect(repo.updateAppointment).toHaveBeenCalledWith(
+        'a1',
+        expect.objectContaining({ service: { connect: { id: 's1' } } }),
+      );
+    });
+
+    it('extiende la duración recalculando endsAt', async () => {
+      repo.findById.mockResolvedValue(existing);
+      repo.updateAppointment.mockResolvedValue({ ...existing });
+
+      await service.updateAppointment('a1', { durationMinutes: 60 });
+
+      expect(repo.updateAppointment).toHaveBeenCalledWith(
+        'a1',
+        expect.objectContaining({
+          endsAt: new Date('2026-12-02T11:00:00.000Z'),
+        }),
+      );
+    });
+
+    it('lanza 404 si el turno no existe', async () => {
+      repo.findById.mockResolvedValue(null);
+
+      await expect(
+        service.updateAppointment('x', { status: 'CONFIRMED' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('getAvailableSlots', () => {
+    it('calcula slots usando el slotMinutes del empleado', async () => {
+      repo.getEmployeeWithAvailability.mockResolvedValue({
+        id: 'e1',
+        slotMinutes: 45,
+        availability: { wed: [{ start: '09:00', end: '10:00' }] },
+      });
+      repo.getBusyAppointments.mockResolvedValue([]);
+      vi.mocked(calculateAvailableSlots).mockReturnValue([
+        { start: '2026-12-02T09:00:00.000Z', end: '2026-12-02T09:45:00.000Z' },
+      ]);
+
+      const slots = await service.getAvailableSlots({
+        employeeId: 'e1',
+        date: '2026-12-02',
+      });
+
+      expect(vi.mocked(calculateAvailableSlots)).toHaveBeenCalledWith(
+        expect.any(Date),
+        expect.anything(),
+        45,
+        [],
+      );
+      expect(slots).toHaveLength(1);
+    });
+
+    it('lanza 404 si el empleado no existe', async () => {
+      repo.getEmployeeWithAvailability.mockResolvedValue(null);
+
+      await expect(
+        service.getAvailableSlots({ employeeId: 'x', date: '2026-12-02' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+});

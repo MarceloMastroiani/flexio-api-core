@@ -6,11 +6,16 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 
 @Injectable()
 export class CustomersService {
-  constructor(
-    private readonly customersRepository: CustomersRepository,
-  ) {}
+  constructor(private readonly customersRepository: CustomersRepository) {}
 
   async createCustomer(createCustomerDto: CreateCustomerDto) {
+    if (!createCustomerDto.phone && !createCustomerDto.email) {
+      throw new HttpException(
+        'Debe proporcionar teléfono o email',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     // Verificar si el teléfono ya existe
     if (createCustomerDto.phone) {
       const verifiedCustomer = await this.customersRepository.findByPhone(
@@ -64,8 +69,12 @@ export class CustomersService {
     return customer;
   }
 
-  updateCustomer(id: string, updateCustomerDto: UpdateCustomerDto) {
-    const updatedCustomer = this.customersRepository.update(
+  async findByPhone(phone: string) {
+    return this.customersRepository.findByPhone(phone);
+  }
+
+  async updateCustomer(id: string, updateCustomerDto: UpdateCustomerDto) {
+    const updatedCustomer = await this.customersRepository.update(
       id,
       updateCustomerDto,
     );

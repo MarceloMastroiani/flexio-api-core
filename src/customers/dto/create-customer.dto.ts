@@ -1,14 +1,14 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class CreateCustomerDto {
   @IsString()
   name: string;
 
-  @IsNotEmpty({ message: 'Debe proporcionar teléfono y email' })
+  @IsOptional()
   @IsString()
-  phone: string;
+  phone?: string;
 
-  @IsNotEmpty({ message: 'Debe proporcionar teléfono y email' })
-  @IsString()
-  email: string;
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 }

@@ -10,5 +10,6 @@ import { CustomersModule } from '../customers/customers.module';
   imports: [ServicesModule, EmployeesModule, CustomersModule],
   controllers: [AppointmentsController],
   providers: [AppointmentsService, AppointmentsRepository],
+  exports: [AppointmentsService],
 })
 export class AppointmentsModule {}

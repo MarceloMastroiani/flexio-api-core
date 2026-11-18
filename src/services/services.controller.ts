@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 
 import { ServicesService } from './services.service';
 
@@ -29,7 +38,10 @@ export class ServicesController {
 
   // Edita nombre, duración o precio
   @Patch(':id')
-  updateService(@Param('id') id: string, @Body() updateServiceDto: UpdateServiceDto) {
+  updateService(
+    @Param('id') id: string,
+    @Body() updateServiceDto: UpdateServiceDto,
+  ) {
     return this.servicesService.updateService(id, updateServiceDto);
   }
 

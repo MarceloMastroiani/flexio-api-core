@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -30,22 +30,9 @@ export class ServicesRepository {
     });
   }
 
-  async findServicesByIds(ids: string[]) {
-    const services = await this.prisma.service.findMany({
-      where: {
-        id: {
-          in: ids,
-        },
-      },
-    });
-
-    return services;
-  }
-
   async deleteService(id: string) {
     return this.prisma.service.delete({
       where: { id },
     });
   }
-
 }

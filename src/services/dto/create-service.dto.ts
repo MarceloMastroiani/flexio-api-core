@@ -1,15 +1,9 @@
-import { IsNumber, IsString, IsDecimal } from "class-validator";
-import { Type } from "class-transformer";
+import { IsNumber, IsString } from 'class-validator';
 
 export class CreateServiceDto {
-
   @IsString()
   name: string;
 
   @IsNumber()
-  duration: number;
-
-  @IsNumber()
   price: number;
-
 }

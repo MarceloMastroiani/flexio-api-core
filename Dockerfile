@@ -3,7 +3,7 @@ FROM node:24-alpine
 WORKDIR /usr/src/app
 
 # Habilitamos Corepack y usamos la misma versión de pnpm que el proyecto
-RUN corepack enable && corepack prepare pnpm@11.10.0 --activate
+RUN corepack enable && corepack prepare pnpm@12.0.0 --activate
 
 # Copiamos únicamente los archivos necesarios para instalar dependencias
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -22,4 +22,4 @@ RUN pnpm run build
 
 EXPOSE 8080
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]

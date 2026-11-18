@@ -1,20 +1,19 @@
-  // MAIL PARA CREACION DE TURNOS
-  //   await this.notificationsService.sendAppointmentCreationEmail(
-  //     newCustomer.email ?? '',
-  //     'Turno creado',
-  //     `
-  // Hola ${newCustomer.name} 👋
+// MAIL PARA CREACION DE TURNOS
+//   await this.notificationsService.sendAppointmentCreationEmail(
+//     newCustomer.email ?? '',
+//     'Turno creado',
+//     `
+// Hola ${newCustomer.name} 👋
 
-  // Tu turno fue confirmado correctamente.
+// Tu turno fue confirmado correctamente.
 
-  // 📅 Fecha: 12/07/2026
-  // 🕒 Hora: 15:30
-  // 💇 Servicio: Corte de pelo
+// 📅 Fecha: 12/07/2026
+// 🕒 Hora: 15:30
+// 💇 Servicio: Corte de pelo
 
-  // ¡Te esperamos!
-  // `,
-  //   );
-
+// ¡Te esperamos!
+// `,
+//   );
 
 import { Injectable } from '@nestjs/common';
 import { Resend } from 'resend';
@@ -82,13 +81,16 @@ export class ResendService {
   }
 
   // ======== EMAILS PÚBLICOS ======== //
-  async sendAppointmentConfirmation(to: string, data: {
-    customerName: string;
-    serviceName: string;
-    employeeName: string;
-    date: string;
-    time: string;
-  }): Promise<void> {
+  async sendAppointmentConfirmation(
+    to: string,
+    data: {
+      customerName: string;
+      serviceName: string;
+      employeeName: string;
+      date: string;
+      time: string;
+    },
+  ): Promise<void> {
     await this.send(
       to,
       'Confirmación de tu turno — Flexio',
@@ -105,13 +107,16 @@ export class ResendService {
     );
   }
 
-  async sendAppointmentReminder(to: string, data: {
-    customerName: string;
-    serviceName: string;
-    employeeName: string;
-    date: string;
-    time: string;
-  }): Promise<void> {
+  async sendAppointmentReminder(
+    to: string,
+    data: {
+      customerName: string;
+      serviceName: string;
+      employeeName: string;
+      date: string;
+      time: string;
+    },
+  ): Promise<void> {
     await this.send(
       to,
       'Recordatorio: tu turno es mañana — Flexio',

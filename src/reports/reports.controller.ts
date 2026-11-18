@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
@@ -10,7 +19,6 @@ import { UpdateReportDto } from './dto/update-report.dto';
 // GET /reports/services/top          -> servicios más pedidos
 // GET /reports/summary               -> dashboard general
 
-
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
@@ -20,5 +28,4 @@ export class ReportsController {
   getRevenue(@Query('from') from: string, @Query('to') to: string) {
     return this.reportsService.getRevenue(from, to);
   }
-
 }

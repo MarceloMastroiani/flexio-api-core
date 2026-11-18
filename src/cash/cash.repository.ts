@@ -1,23 +1,24 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../common/prisma/prisma.service";
-import { Payment } from "@/generated/prisma/client";
-import { CreateCashDto } from "./dto/create-cash.dto";
-import { HttpException, HttpStatus } from "@nestjs/common";
-import { UpdateCashDto } from "./dto/update-cash.dto";
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../common/prisma/prisma.service';
+import { Payment } from '@/generated/prisma/client';
+import { CreateCashDto } from './dto/create-cash.dto';
+import { HttpException, HttpStatus } from '@nestjs/common';
+import { UpdateCashDto } from './dto/update-cash.dto';
 
 @Injectable()
 export class CashRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-
-  async createPayment(appointmentId: string, createCashDto: CreateCashDto): Promise<Payment> {
-
+  async createPayment(
+    appointmentId: string,
+    createCashDto: CreateCashDto,
+  ): Promise<Payment> {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id: appointmentId },
     });
 
     if (!appointment) {
-      throw new HttpException("Appointment not found", HttpStatus.NOT_FOUND);
+      throw new HttpException('Appointment not found', HttpStatus.NOT_FOUND);
     }
 
     const newPayment = await this.prisma.payment.create({
@@ -28,44 +29,53 @@ export class CashRepository {
   }
 
   async getPaymentsByDate(date: string): Promise<Payment[]> {
-
     // Convertir la fecha a un objeto Date
     const target = new Date(date);
 
     if (isNaN(target.getTime())) {
-      throw new HttpException("Invalid date", HttpStatus.BAD_REQUEST);
+      throw new HttpException('Invalid date', HttpStatus.BAD_REQUEST);
     }
 
     // Obtener el inicio y fin del día en UTC.
     // EJ: si se pasa '2025-09-15'
     //  startOfDay: '2025-09-15T00:00:00.000Z'
     //  startOfNextDay: '2025-09-16T00:00:00.000Z'
-    const startOfDay = new Date(Date.UTC(
-      target.getUTCFullYear(),
-      target.getUTCMonth(),
-      target.getUTCDate(),
-      0, 0, 0, 0
-    ));
-    const startOfNextDay = new Date(Date.UTC(
-      target.getUTCFullYear(),
-      target.getUTCMonth(),
-      target.getUTCDate() + 1,
-      0, 0, 0, 0
-    ));// El startOfNextDay es el inicio del día siguiente, para incluir todos los pagos del día especificado
+    const startOfDay = new Date(
+      Date.UTC(
+        target.getUTCFullYear(),
+        target.getUTCMonth(),
+        target.getUTCDate(),
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
+    const startOfNextDay = new Date(
+      Date.UTC(
+        target.getUTCFullYear(),
+        target.getUTCMonth(),
+        target.getUTCDate() + 1,
+        0,
+        0,
+        0,
+        0,
+      ),
+    ); // El startOfNextDay es el inicio del día siguiente, para incluir todos los pagos del día especificado
 
     // Obtener los pagos que se realizaron en el día especificado
     const payments = await this.prisma.payment.findMany({
       where: {
-        paidAt: { gte: startOfDay, lt: startOfNextDay } // Incluye todos los pagos que se hicieron el día especificado
+        paidAt: { gte: startOfDay, lt: startOfNextDay }, // Incluye todos los pagos que se hicieron el día especificado
       },
       include: {
         appointment: {
-            include: { services: true, customer: true },
+          include: { service: true, customer: true },
         },
       },
     });
 
-    return payments
+    return payments;
   }
 
   async getCashClose(date: string) {
@@ -122,9 +132,7 @@ export class CashRepository {
   //     };
   // }
 
-
-// ========================================================== //
-
+  // ========================================================== //
 
   async getAllPayments(): Promise<Payment[]> {
     const payments = await this.prisma.payment.findMany();
@@ -148,7 +156,10 @@ export class CashRepository {
     return payments;
   }
 
-  async updatePayment(paymentId: string, updateCashDto: UpdateCashDto): Promise<Payment | null> {
+  async updatePayment(
+    paymentId: string,
+    updateCashDto: UpdateCashDto,
+  ): Promise<Payment | null> {
     const updatedPayment = await this.prisma.payment.update({
       where: { id: paymentId },
       data: updateCashDto,

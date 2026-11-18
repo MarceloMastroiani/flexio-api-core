@@ -2,23 +2,24 @@ import {
   IsArray,
   IsString,
   IsOptional,
+  IsInt,
+  Min,
+  Max,
   ValidateNested,
   Matches,
-  ArrayMinSize,
-  ArrayMaxSize,
-} from "class-validator";
-import { Type } from "class-transformer";
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 class TimeRangeDto {
   @IsString()
   @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
-    message: "start debe tener formato HH:mm",
+    message: 'start debe tener formato HH:mm',
   })
   start: string;
 
   @IsString()
   @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
-    message: "end debe tener formato HH:mm",
+    message: 'end debe tener formato HH:mm',
   })
   end: string;
 }
@@ -71,8 +72,17 @@ export class CreateEmployeeDto {
   @IsString()
   name: string;
 
+  // Opcional: si no se envía, se usa el email del usuario vinculado.
+  @IsOptional()
   @IsString()
-  email: string;
+  email?: string;
+
+  // Duración por defecto del turno del empleado (en minutos).
+  @IsOptional()
+  @IsInt()
+  @Min(5)
+  @Max(480)
+  slotMinutes?: number;
 
   @ValidateNested()
   @Type(() => DayAvailabilityDto)

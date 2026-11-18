@@ -9,6 +9,7 @@ import { ReportsModule } from './reports/reports.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { ServicesModule } from './services/services.module';
 import { EmployeesModule } from './employees/employees.module';
+import { PublicModule } from './public/public.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { EmployeesModule } from './employees/employees.module';
     AppointmentsModule,
     ServicesModule,
     EmployeesModule,
+    PublicModule,
   ],
   controllers: [],
   providers: [],

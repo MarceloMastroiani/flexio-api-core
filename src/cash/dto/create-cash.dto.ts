@@ -1,8 +1,7 @@
-import { PaymentMethod } from "@/generated/prisma/client";
-import { IsString, IsOptional, IsEnum, IsNumber } from "class-validator";
+import { PaymentMethod } from '@/generated/prisma/client';
+import { IsString, IsOptional, IsEnum, IsNumber } from 'class-validator';
 
 export class CreateCashDto {
-
   @IsNumber()
   amount: number;
 
