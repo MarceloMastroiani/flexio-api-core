@@ -3,10 +3,11 @@ import { Role } from '../../../generated/prisma/client';
 
 export class CreateAuthDto {
   @IsEmail()
-  email: string;
+  email!: string;
+
   @IsString()
-  password: string;
-  @IsString()
+  password!: string;
+
   @IsEnum(Role)
-  role: Role;
+  role!: Role;
 }

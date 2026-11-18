@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 
 import { PrismaService } from '../common/prisma/prisma.service';

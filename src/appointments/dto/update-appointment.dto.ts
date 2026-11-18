@@ -7,17 +7,17 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { AppointmentStatus } from '@/generated/prisma/enums';
+import { AppointmentStatus } from '../../../generated/prisma/enums';
 
 export class UpdateAppointmentDto {
   @IsOptional()
   @IsEnum(AppointmentStatus)
-  status?: AppointmentStatus;
+  status?: AppointmentStatus | undefined;
 
   // Servicio asignado por el staff al atender (para métricas). `null` lo desasigna.
   @IsOptional()
   @IsUUID('4', { each: false })
-  serviceId?: string | null;
+  serviceId?: string | null | undefined;
 
   // Nueva duración total en minutos (permite extender/acortar el turno).
   // `endsAt` se recalcula como `startsAt + durationMinutes`.
@@ -25,9 +25,9 @@ export class UpdateAppointmentDto {
   @IsInt()
   @Min(5)
   @Max(480)
-  durationMinutes?: number;
+  durationMinutes?: number | undefined;
 
   @IsOptional()
   @IsString()
-  notes?: string;
+  notes?: string | undefined;
 }

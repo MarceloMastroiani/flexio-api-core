@@ -15,13 +15,13 @@ class TimeRangeDto {
   @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
     message: 'start debe tener formato HH:mm',
   })
-  start: string;
+  start!: string;
 
   @IsString()
   @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
     message: 'end debe tener formato HH:mm',
   })
-  end: string;
+  end!: string;
 }
 
 class DayAvailabilityDto {
@@ -70,21 +70,21 @@ class DayAvailabilityDto {
 
 export class CreateEmployeeDto {
   @IsString()
-  name: string;
+  name!: string;
 
   // Opcional: si no se envía, se usa el email del usuario vinculado.
   @IsOptional()
   @IsString()
-  email?: string;
+  email?: string | undefined;
 
   // Duración por defecto del turno del empleado (en minutos).
   @IsOptional()
   @IsInt()
   @Min(5)
   @Max(480)
-  slotMinutes?: number;
+  slotMinutes?: number | undefined;
 
   @ValidateNested()
   @Type(() => DayAvailabilityDto)
-  availability: DayAvailabilityDto;
+  availability!: DayAvailabilityDto;
 }

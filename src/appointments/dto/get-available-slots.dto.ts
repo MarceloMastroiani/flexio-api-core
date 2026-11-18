@@ -2,8 +2,8 @@ import { IsDateString, IsUUID } from 'class-validator';
 
 export class GetAvailableSlotsDto {
   @IsUUID()
-  employeeId: string;
+  employeeId!: string;
 
   @IsDateString()
-  date: string;
+  date!: string;
 }

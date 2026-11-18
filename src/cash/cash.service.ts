@@ -2,7 +2,6 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { CreateCashDto } from './dto/create-cash.dto';
 import { UpdateCashDto } from './dto/update-cash.dto';
 import { CashRepository } from './cash.repository';
-import { CustomersService } from '../customers/customers.service';
 import { HttpStatus } from '@nestjs/common';
 
 @Injectable()
@@ -76,7 +75,7 @@ export class CashService {
   async findById(id: string) {
     const paymentById = await this.cashRepository.getPaymentById(id);
 
-    if (!paymentById || paymentById[0] === undefined) {
+    if (!paymentById) {
       throw new HttpException(
         'Failed to get payment',
         HttpStatus.INTERNAL_SERVER_ERROR,

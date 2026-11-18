@@ -1,6 +1,6 @@
-import { Injectable, UseGuards } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
-import { Appointment, Prisma, Role } from '../../generated/prisma/client';
+import { Appointment, Prisma } from '../../generated/prisma/client';
 import { CreateAppointmentParams } from './dto/create-appointment.dto';
 
 // Include estándar para los turnos: servicio asignado + cliente + empleado
@@ -13,7 +13,6 @@ const appointmentInclude = {
 @Injectable()
 export class AppointmentsRepository {
   constructor(private readonly prisma: PrismaService) {}
-
 
   async getEmployeeWithAvailability(employeeId: string) {
     return this.prisma.employee.findUnique({
@@ -59,7 +58,7 @@ export class AppointmentsRepository {
         customerId,
         startsAt,
         endsAt,
-        notes,
+        notes: notes ?? null,
       },
       include: appointmentInclude,
     });

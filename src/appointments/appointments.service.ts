@@ -11,7 +11,7 @@ import { AppointmentsRepository } from './appointments.repository';
 import { EmployeesService } from '../employees/employees.service';
 import { CustomersService } from '../customers/customers.service';
 import { ServicesService } from '../services/services.service';
-import { Prisma } from '@/generated/prisma/client';
+import { Appointment, Prisma } from '../../generated/prisma/client';
 import { GetAvailableSlotsDto } from './dto/get-available-slots.dto';
 import { calculateAvailableSlots } from './helpers/availability.helper';
 
@@ -82,7 +82,9 @@ export class AppointmentsService {
   }
 
   // Crea un nuevo turno (sin servicio; el servicio se asigna después)
-  async createAppointment(createAppointmentDto: CreateAppointmentDto) {
+  async createAppointment(
+    createAppointmentDto: CreateAppointmentDto,
+  ): Promise<Appointment> {
     const employee = await this.employeesService.findOneEmployee(
       createAppointmentDto.employeeId,
     );

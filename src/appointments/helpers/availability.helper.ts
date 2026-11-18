@@ -12,7 +12,7 @@ const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
  * Devuelve la clave del día ("mon", "tue", etc.) para una fecha dada, en UTC.
  */
 function getDayKey(date: Date): string {
-  return DAY_KEYS[date.getUTCDay()];
+  return DAY_KEYS[date.getUTCDay()] ?? 'sun';
 }
 
 /**

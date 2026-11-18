@@ -5,7 +5,8 @@ import { PrismaService } from '../common/prisma/prisma.service';
 export class ReportsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getRevenue(from: string, to: string) {
-    return ``;
+  // TODO: implementar el cálculo real. Stub que devuelve vacío por ahora.
+  getRevenue(_from: string, _to: string): string {
+    return '';
   }
 }

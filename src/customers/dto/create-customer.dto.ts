@@ -2,13 +2,13 @@ import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class CreateCustomerDto {
   @IsString()
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  phone?: string | undefined;
 
   @IsOptional()
   @IsEmail()
-  email?: string;
+  email?: string | undefined;
 }

@@ -13,29 +13,29 @@ import {
 export class CreatePublicAppointmentDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @IsString()
   @IsNotEmpty()
-  phone: string;
+  phone!: string;
 
   @IsOptional()
   @IsEmail()
-  email?: string;
+  email?: string | undefined;
 
   @IsUUID()
-  employeeId: string;
+  employeeId!: string;
 
   @IsDateString()
-  startsAt: string;
+  startsAt!: string;
 
   @IsOptional()
   @IsInt()
   @Min(5)
   @Max(480)
-  durationMinutes?: number;
+  durationMinutes?: number | undefined;
 
   @IsOptional()
   @IsString()
-  notes?: string;
+  notes?: string | undefined;
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { Customer, Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
-import { Customer } from '@/generated/prisma/client';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
@@ -11,7 +11,11 @@ export class CustomersRepository {
   // Create a new customer
   async create(createCustomerDto: CreateCustomerDto): Promise<Customer> {
     const newCustomer = await this.prisma.customer.create({
-      data: createCustomerDto,
+      data: {
+        name: createCustomerDto.name,
+        phone: createCustomerDto.phone ?? null,
+        email: createCustomerDto.email ?? null,
+      },
     });
 
     return newCustomer;
@@ -52,9 +56,17 @@ export class CustomersRepository {
     id: string,
     updateCustomerDto: UpdateCustomerDto,
   ): Promise<Customer> {
+    const data: Prisma.CustomerUpdateInput = {};
+    if (updateCustomerDto.name !== undefined)
+      data.name = updateCustomerDto.name;
+    if (updateCustomerDto.phone !== undefined)
+      data.phone = updateCustomerDto.phone;
+    if (updateCustomerDto.email !== undefined)
+      data.email = updateCustomerDto.email;
+
     const updatedCustomer = await this.prisma.customer.update({
       where: { id },
-      data: updateCustomerDto,
+      data,
     });
 
     return updatedCustomer;

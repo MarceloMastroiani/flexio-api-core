@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { Employee, Prisma } from '@/generated/prisma/client';
+import { Employee, Prisma } from '../../generated/prisma/client';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class EmployeesRepository {
     const newEmployee = await this.prisma.employee.create({
       data: {
         name,
-        email,
+        email: email ?? null,
         availability: JSON.parse(
           JSON.stringify(availability),
         ) as Prisma.InputJsonValue,

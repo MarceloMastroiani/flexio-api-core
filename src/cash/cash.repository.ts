@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
-import { Payment } from '@/generated/prisma/client';
+import { Payment, Prisma } from '../../generated/prisma/client';
 import { CreateCashDto } from './dto/create-cash.dto';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { UpdateCashDto } from './dto/update-cash.dto';
@@ -22,7 +22,12 @@ export class CashRepository {
     }
 
     const newPayment = await this.prisma.payment.create({
-      data: { ...createCashDto, appointmentId },
+      data: {
+        amount: createCashDto.amount,
+        method: createCashDto.method,
+        notes: createCashDto.notes ?? null,
+        appointmentId,
+      },
     });
 
     return newPayment;
@@ -160,9 +165,14 @@ export class CashRepository {
     paymentId: string,
     updateCashDto: UpdateCashDto,
   ): Promise<Payment | null> {
+    const data: Prisma.PaymentUpdateInput = {};
+    if (updateCashDto.amount !== undefined) data.amount = updateCashDto.amount;
+    if (updateCashDto.method !== undefined) data.method = updateCashDto.method;
+    if (updateCashDto.notes !== undefined) data.notes = updateCashDto.notes;
+
     const updatedPayment = await this.prisma.payment.update({
       where: { id: paymentId },
-      data: updateCashDto,
+      data,
     });
 
     return updatedPayment;

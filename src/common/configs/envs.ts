@@ -21,13 +21,13 @@ const envsSchema = Joi.object({
   CORS_ORIGIN: Joi.string().required(),
 }).unknown(true);
 
-const { error, value } = envsSchema.validate(process.env);
+const result = envsSchema.validate(process.env);
 
-if (error) {
-  throw new Error(`Config validation error: \${error.message}`);
+if (result.error) {
+  throw new Error(`Config validation error: ${result.error.message}`);
 }
 
-const envsVars: EnvVars = value;
+const envsVars = result.value as EnvVars;
 
 export const envs = {
   port: envsVars.PORT,

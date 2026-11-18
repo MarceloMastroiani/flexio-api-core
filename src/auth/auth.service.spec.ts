@@ -92,8 +92,8 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('firma el JWT con el payload correcto', async () => {
-      const result = await service.login({
+    it('firma el JWT con el payload correcto', () => {
+      const result = service.login({
         id: 'user-1',
         email: 'admin@pelu',
         role: 'ADMIN',

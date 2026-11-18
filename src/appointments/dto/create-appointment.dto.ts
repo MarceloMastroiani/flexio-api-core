@@ -13,27 +13,27 @@ export interface CreateAppointmentParams {
   customerId: string;
   startsAt: Date;
   endsAt: Date;
-  notes?: string;
+  notes?: string | undefined;
 }
 
 export class CreateAppointmentDto {
   @IsUUID()
-  customerId: string;
+  customerId!: string;
 
   @IsUUID()
-  employeeId: string;
+  employeeId!: string;
 
   // Duración del turno en minutos. Si no se envía, se usa el slotMinutes del empleado.
   @IsOptional()
   @IsInt()
   @Min(5)
   @Max(480)
-  durationMinutes?: number;
+  durationMinutes?: number | undefined;
 
   @IsDateString()
-  startsAt: string;
+  startsAt!: string;
 
   @IsOptional()
   @IsString()
-  notes?: string;
+  notes?: string | undefined;
 }

@@ -1,16 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ReportsService } from './reports.service';
-import { CreateReportDto } from './dto/create-report.dto';
-import { UpdateReportDto } from './dto/update-report.dto';
 
 // 1. TODO: Crear el modulo de Appointments antes de seguir con reports
 // 2. TODO: Crear endpoints para reportes.

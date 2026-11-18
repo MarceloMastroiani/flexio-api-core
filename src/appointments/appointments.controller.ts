@@ -44,7 +44,7 @@ export class AppointmentsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN','STAFF')
+  @Roles('ADMIN', 'STAFF')
   // Obtiene los turnos de hoy (privado)
   @Get('today')
   findToday() {
@@ -52,7 +52,7 @@ export class AppointmentsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN','STAFF')
+  @Roles('ADMIN', 'STAFF')
   // Actualiza estado / servicio / duración de un turno (privado)
   @Patch(':id')
   updateAppointment(

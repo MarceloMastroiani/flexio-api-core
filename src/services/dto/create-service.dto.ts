@@ -2,8 +2,8 @@ import { IsNumber, IsString } from 'class-validator';
 
 export class CreateServiceDto {
   @IsString()
-  name: string;
+  name!: string;
 
   @IsNumber()
-  price: number;
+  price!: number;
 }

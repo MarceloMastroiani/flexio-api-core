@@ -21,12 +21,12 @@ export class PrismaService
     super({ adapter });
   }
 
-  onModuleInit() {
-    this.$connect();
+  async onModuleInit() {
+    await this.$connect();
     Logger.log('Database connected');
   }
-  onModuleDestroy() {
-    this.$disconnect();
+  async onModuleDestroy() {
+    await this.$disconnect();
     Logger.log('Database disconnected');
   }
 }
