@@ -1,9 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { AuthRepository } from './auth.repository';
-import { User } from 'generated/prisma/client';
+import { User } from '../../generated/prisma/client';
 import { comparePassword } from '../common/helpers/hash-password.helpers';
 import { JwtService } from '@nestjs/jwt';
+import { SafeUser } from './dto/login-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +16,7 @@ export class AuthService {
   // AUTHENTICATION
   // ============================================================
 
-  async validateUser(email: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string): Promise<SafeUser> {
     const user = await this.authRepository.findOneByEmail(email);
     if (!user) {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
@@ -30,7 +31,7 @@ export class AuthService {
     return result;
   }
 
-  async login(user: Omit<User, 'password'>) {
+  login(user: Omit<User, 'password'>) {
     const payload = { email: user.email, sub: user.id, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),

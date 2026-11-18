@@ -19,15 +19,15 @@ import { Roles } from '../common/decorators/roles.decorador';
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
-  // @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles('ADMIN', 'STAFF')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Post()
   createCustomer(@Body() createCustomerDto: CreateCustomerDto) {
     return this.customersService.createCustomer(createCustomerDto);
   }
 
-  // @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles('ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Get()
   findAllCustomers() {
     return this.customersService.findAllCustomers();

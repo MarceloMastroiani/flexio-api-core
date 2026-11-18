@@ -30,13 +30,15 @@ export class EmployeesController {
     return this.employeesService.createEmployee(id, createEmployeeDto);
   }
 
-  // @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles('ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Get()
   findAll() {
     return this.employeesService.findAllEmployees();
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch(':id')
   updateEmployee(
     @Param('id') id: string,
@@ -45,6 +47,8 @@ export class EmployeesController {
     return this.employeesService.updateEmployee(id, updateEmployeeDto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Delete(':id')
   deleteEmployee(@Param('id') id: string) {
     return this.employeesService.deleteEmployee(id);

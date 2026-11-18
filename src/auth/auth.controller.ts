@@ -10,11 +10,11 @@ import {
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 
-import { User } from 'generated/prisma/client';
 import { LocalAuthGuard } from '../common/guards/local-auth.guard';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorador';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { SafeUser } from './dto/login-auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -25,13 +25,13 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req: { user: Omit<User, 'password'> }) {
+  login(@Request() req: { user: SafeUser }) {
     return this.authService.login(req.user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req: { user: Omit<User, 'password'> }) {
+  getProfile(@Request() req: { user: SafeUser }) {
     return req.user;
   }
 
