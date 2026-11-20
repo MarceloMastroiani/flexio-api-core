@@ -148,9 +148,61 @@ Todas las rutas llevan el prefijo `/api`.
 | DELETE | `/cash/:id` | Elimina pago |
 
 ### Reportes (`/api/reports`)
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/reports/revenue?from&to` | Ingresos del período (⚠️ pendiente de implementar) |
+
+Todos requieren JWT con rol **`ADMIN`** (`@Roles('ADMIN')`). Respuesta unificada `{ meta, data }`; `meta` incluye `from`, `to`, `timezone`, `generatedAt`, y opcionalmente `granularity` y `comparison`.
+
+**Parámetros de rango** (salvo `customers/inactive`):
+- `from`, `to`: fecha local `YYYY-MM-DD`, **ambas inclusivas**. Defaults: últimos 30 días hasta hoy.
+- Validaciones: fecha real (rechaza `2026-02-31`), `from <= to`, rango máximo **366 días**, `to >= 2020-01-01`. Inválido → `400`.
+
+| Método | Ruta | Parámetros | Descripción |
+|---|---|---|---|
+| GET | `/reports/revenue` | `from,to,granularity,format` | Ingresos por `paidAt` |
+| GET | `/reports/appointments` | `from,to,granularity,format` | Turnos por `startsAt` |
+| GET | `/reports/appointments/heatmap` | `from,to` | Turnos no cancelados por día de semana y hora local |
+| GET | `/reports/services/top` | `from,to,limit,orderBy` | Top servicios (turnos `COMPLETED`) |
+| GET | `/reports/employees` | `from,to` | Métricas y ocupación por empleado |
+| GET | `/reports/customers` | `from,to,limit` | Activos/nuevos/recurrentes + top por gasto/visitas |
+| GET | `/reports/customers/inactive` | `days,page,pageSize` | Clientes inactivos (paginado) |
+| GET | `/reports/summary` | `from,to,compare` | Dashboard que compone el resto |
+
+`granularity`: `day` (default) · `week` (semanas desde el lunes) · `month`. `format`: `json` (default) · `csv`.
+
+**Definiciones exactas**
+- **Ingresos**: `Payment.paidAt` (fecha de cobro) dentro del rango; moneda del negocio (ARS), `number` con 2 decimales (sumado en SQL con `ROUND(COALESCE(SUM(...),0),2)::float8`).
+- **Turnos**: `Appointment.startsAt` dentro del rango.
+- **Cliente activo**: al menos un turno `COMPLETED` en el rango.
+- **Cliente nuevo**: su primer `COMPLETED` de toda la historia cae dentro del rango.
+- **Cliente recurrente**: activo y con al menos un `COMPLETED` anterior al rango.
+- **Ocupación**: minutos reservados (turnos `PENDING`/`CONFIRMED`/`COMPLETED`, `endsAt - startsAt` recortado al rango) / minutos disponibles (disponibilidad semanal del empleado × días del rango). `null` si no tiene horario.
+- **`extendedCount`**: turnos con `extendedSlots > 0`.
+- **`coveragePct`** (servicios): turnos `COMPLETED` con servicio asignado / total `COMPLETED`.
+- **`sharePct`** (servicios): participación del servicio sobre los turnos `COMPLETED` con servicio.
+
+**Zona horaria y rangos**
+Las fechas se interpretan en `BUSINESS_TIMEZONE` (default `America/Argentina/Buenos_Aires`) y se convierten a un intervalo UTC semiabierto `[fromUtc, toUtcExclusive)`. Las columnas son `timestamp(3)` en UTC; para agrupar por día/semana/mes local se usa `("col" AT TIME ZONE 'UTC') AT TIME ZONE :tz` + `date_trunc`.
+
+**CSV** (`revenue` y `appointments` con `format=csv`)
+`Content-Type: text/csv; charset=utf-8`, `Content-Disposition: attachment`, BOM UTF-8, fin de línea `\r\n`, escape de comas/comillas/saltos y protección anti *CSV injection* (prefijo `'` en textos que empiezan con `= + - @`). Columnas: revenue `date,total,count`; appointments `date,total,completed,cancelled`.
+
+**Caché**
+En memoria vía `@nestjs/cache-manager`, aislada detrás de `ReportsCacheService`. Solo se cachean rangos **totalmente pasados** (TTL 300 s); los rangos que incluyen hoy **no** se cachean. La key incluye reporte + parámetros normalizados (orden fijo) + `timezone`. Para pasar a Redis se cambia solo el store registrado en `ReportsModule`.
+
+**Variante de esquema (servicios)**
+El repo usa la variante **(b)**: un único `Appointment.serviceId` + `Appointment.priceAtTime`. Toda la relación turno–servicio está aislada en `repositories/services-report.repository.ts`; migrar a la variante (a) (`AppointmentService` many-to-many con `priceAtTime`) solo requiere cambiar ese archivo, manteniendo el contrato.
+
+**Datos demo**
+```bash
+pnpm run seed:demo   # determinístico; se niega si ya hay >50 turnos (usar --force)
+```
+
+**Cómo agregar un reporte nuevo**
+1. `repositories/<x>.repository.ts`: queries (`Prisma` o `$queryRaw` parametrizado; `COUNT(*)::int`; dinero `::float8`).
+2. `services/<x>.service.ts`: `resolveRange()` + `runReport()` (cache/logging) + armar `{ meta, data }`.
+3. DTO de query extendiendo `ReportRangeDto`, con `@ApiPropertyOptional`.
+4. Ruta en `reports.controller.ts` con `@ApiOkResponse({ type: XResponseDto })`.
+5. Clase de respuesta con `@ApiProperty` en `types/report-response.type.ts`.
+6. Tests en `src/reports/**/*.spec.ts` y `pnpm test`.
 
 ---
 
@@ -203,7 +255,7 @@ WHERE "employeeId" = '<uuid>'
   AND "startsAt" >= '2026-01-01' AND "startsAt" < '2027-01-01';
 ```
 
-Verificado localmente con Docker: `Payment_paidAt_idx` (Index Scan) y `Appointment_status_startsAt_idx` (Index Only Scan). La constraint `no_overlapping_appointments` y la extensión `btree_gist` quedan intactas.
+Verificado localmente con Docker sobre el dataset demo (~3000 turnos / ~2200 pagos): el planner usa `Payment_paidAt_idx` (Index Scan), `Appointment_status_startsAt_idx` y `Appointment_employeeId_startsAt_idx` (Index Only Scan) sin forzar `enable_seqscan`. La constraint `no_overlapping_appointments` y la extensión `btree_gist` quedan intactas.
 
 ---
 
@@ -215,8 +267,9 @@ El frontend vive en `../flexio-web` (React + Vite + TypeScript + Tailwind). Corr
 
 ## Notas y pendientes conocidos
 
-- El endpoint `GET /reports/revenue` sigue siendo un stub hasta reemplazar el módulo de reportes.
-- El cron de recordatorios por email está desactivado (decorador `@Cron` comentado).
+- El módulo de reportes está implementado (ver sección **Reportes**); `GET /reports/appointments?month=` y otros del TODO original quedan fuera de alcance.
+- `@nestjs/throttler` no está instalado: el rate limit (30 req/min en `/reports/*`) queda como pendiente.
+- Cron de recordatorios por email desactivado (decorador `@Cron` comentado).
 - Varios endpoints de escritura (PATCH/DELETE de `services` y `employees`, y todo `appointments`) todavía **no tienen guards**; quedan como deuda de seguridad pendiente.
 - Lint y TypeScript estricto están limpios (`pnpm lint` y `tsc` sin errores). El proyecto usa `module`/`moduleResolution: NodeNext` y `strict` con `exactOptionalPropertyTypes`.
 - Los imports de Prisma usan rutas relativas a `generated/prisma` (no hay alias `@/`).
