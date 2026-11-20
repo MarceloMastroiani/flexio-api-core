@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon';
+
 type TimeRange = { start: string; end: string };
 type WorkingHours = Record<string, TimeRange[]>; // { "mon": [{start, end}, {start, end}] }
 
@@ -6,40 +8,27 @@ interface BusyRange {
   end: Date;
 }
 
-const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+// ISO weekday: 1=lunes … 7=domingo
+const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
 /**
- * Devuelve la clave del día ("mon", "tue", etc.) para una fecha dada, en UTC.
+ * Convierte un "HH:mm" de la disponibilidad (hora local del negocio) a un Date UTC
+ * sobre el día indicado.
  */
-function getDayKey(date: Date): string {
-  return DAY_KEYS[date.getUTCDay()] ?? 'sun';
-}
-
-/**
- * Convierte "09:00" + una fecha base a un Date completo en UTC.
- */
-function timeToDate(baseDate: Date, time: string): Date {
-  // Valida que el tiempo sea una cadena en formato "HH:MM"
+function timeToUtc(day: DateTime, time: string): Date {
   if (typeof time !== 'string' || !/^\d{2}:\d{2}$/.test(time)) {
     throw new Error(`Format error: ${JSON.stringify(time)}`);
   }
 
   const [hours, minutes] = time.split(':').map(Number);
-  return new Date(
-    Date.UTC(
-      baseDate.getUTCFullYear(),
-      baseDate.getUTCMonth(),
-      baseDate.getUTCDate(),
-      hours,
-      minutes,
-      0,
-      0,
-    ),
-  );
+  return day
+    .set({ hour: hours ?? 0, minute: minutes ?? 0, second: 0, millisecond: 0 })
+    .toUTC()
+    .toJSDate();
 }
 
 /**
- * Genera los slots dentro de UN rango horario puntual (ej: 09:00 a 13:00).
+ * Genera los slots dentro de UN rango horario puntual (ya en UTC).
  */
 function generateSlotsInRange(
   rangeStart: Date,
@@ -75,17 +64,23 @@ function generateSlotsInRange(
 }
 
 /**
- * Calcula los slots disponibles para un empleado en un día específico.
- * Soporta múltiples rangos por día (ej: turno mañana + turno tarde).
+ * Calcula los slots disponibles para un empleado en una fecha local del negocio.
+ * La disponibilidad (`HH:mm`) se interpreta en `tz` y se convierte a UTC.
  */
 export function calculateAvailableSlots(
-  date: Date,
+  dateStr: string,
   availability: WorkingHours,
-  serviceDuration: number,
+  slotMinutes: number,
   busyRanges: BusyRange[],
+  tz: string,
   now: Date = new Date(),
 ): { start: string; end: string }[] {
-  const dayKey = getDayKey(date);
+  const day = DateTime.fromISO(dateStr, { zone: tz }).startOf('day');
+  if (!day.isValid) {
+    return [];
+  }
+
+  const dayKey = DAY_KEYS[day.weekday - 1]!;
   const dayRanges = availability[dayKey];
 
   // El empleado no trabaja ese día
@@ -93,12 +88,12 @@ export function calculateAvailableSlots(
     return [];
   }
 
-  const stepMs = serviceDuration * 60 * 1000;
+  const stepMs = slotMinutes * 60 * 1000;
   let allSlots: { start: string; end: string }[] = [];
 
   for (const range of dayRanges) {
-    const rangeStart = timeToDate(date, range.start);
-    const rangeEnd = timeToDate(date, range.end);
+    const rangeStart = timeToUtc(day, range.start);
+    const rangeEnd = timeToUtc(day, range.end);
 
     const slotsInRange = generateSlotsInRange(
       rangeStart,

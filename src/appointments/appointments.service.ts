@@ -19,6 +19,7 @@ import { GetAvailableSlotsDto } from './dto/get-available-slots.dto';
 import { FindAppointmentsQueryDto } from './dto/find-appointments-query.dto';
 import { calculateAvailableSlots } from './helpers/availability.helper';
 import { resolveRange } from '../reports/helpers/date-range.helper';
+import { envs } from '../common/configs/envs';
 
 @Injectable()
 export class AppointmentsService {
@@ -40,37 +41,14 @@ export class AppointmentsService {
       throw new NotFoundException('Employee not found');
     }
 
-    const slotMinutes = employee.slotMinutes;
-
-    const targetDate = new Date(date);
-    const dayStart = new Date(
-      Date.UTC(
-        targetDate.getUTCFullYear(),
-        targetDate.getUTCMonth(),
-        targetDate.getUTCDate(),
-        0,
-        0,
-        0,
-        0,
-      ),
-    );
-    const dayEnd = new Date(
-      Date.UTC(
-        targetDate.getUTCFullYear(),
-        targetDate.getUTCMonth(),
-        targetDate.getUTCDate(),
-        23,
-        59,
-        59,
-        999,
-      ),
-    );
+    // Rango del día local del negocio (00:00 local → 00:00 local del día siguiente)
+    const range = resolveRange({ from: date, to: date });
 
     const busyAppointments =
       await this.appointmentsRepository.getBusyAppointments(
         employeeId,
-        dayStart,
-        dayEnd,
+        range.fromUtc,
+        range.toUtcExclusive,
       );
 
     const busyRanges = busyAppointments.map((a) => ({
@@ -79,10 +57,11 @@ export class AppointmentsService {
     }));
 
     return calculateAvailableSlots(
-      dayStart,
+      date,
       employee.availability as Record<string, { start: string; end: string }[]>,
-      slotMinutes,
+      employee.slotMinutes,
       busyRanges,
+      envs.businessTimezone,
     );
   }
 

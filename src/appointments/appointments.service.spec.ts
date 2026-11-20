@@ -6,6 +6,7 @@ import { AppointmentsRepository } from './appointments.repository';
 import { EmployeesService } from '../employees/employees.service';
 import { CustomersService } from '../customers/customers.service';
 import { ServicesService } from '../services/services.service';
+import { envs } from '../common/configs/envs';
 
 // Mock del helper de disponibilidad para hacer el test determinista
 vi.mock('./helpers/availability.helper', () => ({
@@ -217,10 +218,11 @@ describe('AppointmentsService', () => {
       });
 
       expect(vi.mocked(calculateAvailableSlots)).toHaveBeenCalledWith(
-        expect.any(Date),
+        '2026-12-02',
         expect.anything(),
         45,
         [],
+        envs.businessTimezone,
       );
       expect(slots).toHaveLength(1);
     });
