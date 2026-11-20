@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
-import { Appointment, Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import { CreateAppointmentParams } from './dto/create-appointment.dto';
 
 // Include estándar para los turnos: servicio asignado + cliente + empleado
@@ -9,6 +9,11 @@ const appointmentInclude = {
   customer: true,
   employee: true,
 } satisfies Prisma.AppointmentInclude;
+
+// Tipo del turno con sus relaciones incluidas
+export type AppointmentWithRelations = Prisma.AppointmentGetPayload<{
+  include: typeof appointmentInclude;
+}>;
 
 @Injectable()
 export class AppointmentsRepository {
@@ -49,7 +54,7 @@ export class AppointmentsRepository {
 
   async createAppointment(
     params: CreateAppointmentParams,
-  ): Promise<Appointment> {
+  ): Promise<AppointmentWithRelations> {
     const { employeeId, customerId, startsAt, endsAt, notes } = params;
 
     return this.prisma.appointment.create({
@@ -64,20 +69,20 @@ export class AppointmentsRepository {
     });
   }
 
-  async findAllAppointments(): Promise<Appointment[]> {
+  async findAllAppointments(): Promise<AppointmentWithRelations[]> {
     return this.prisma.appointment.findMany({
       include: appointmentInclude,
     });
   }
 
-  async findById(id: string): Promise<Appointment | null> {
+  async findById(id: string): Promise<AppointmentWithRelations | null> {
     return this.prisma.appointment.findUnique({
       where: { id },
       include: appointmentInclude,
     });
   }
 
-  async findToday(): Promise<Appointment[]> {
+  async findToday(): Promise<AppointmentWithRelations[]> {
     const now = new Date();
     const start = new Date(
       Date.UTC(
@@ -113,7 +118,7 @@ export class AppointmentsRepository {
   async updateAppointment(
     id: string,
     data: Prisma.AppointmentUpdateInput,
-  ): Promise<Appointment | null> {
+  ): Promise<AppointmentWithRelations | null> {
     return this.prisma.appointment.update({
       where: { id },
       data,
@@ -121,7 +126,35 @@ export class AppointmentsRepository {
     });
   }
 
-  async removeAppointment(id: string): Promise<Appointment | null> {
+  // Actualiza el turno y, en la misma transacción, marca la última visita del
+  // cliente (solo si este startsAt es más reciente que el valor actual).
+  async updateAppointmentWithLastVisit(
+    id: string,
+    data: Prisma.AppointmentUpdateInput,
+    visitAt: Date,
+  ): Promise<AppointmentWithRelations | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.appointment.update({
+        where: { id },
+        data,
+        include: appointmentInclude,
+      });
+
+      await tx.customer.updateMany({
+        where: {
+          id: updated.customerId,
+          OR: [{ lastVisitAt: null }, { lastVisitAt: { lt: visitAt } }],
+        },
+        data: { lastVisitAt: visitAt },
+      });
+
+      return updated;
+    });
+  }
+
+  async removeAppointment(
+    id: string,
+  ): Promise<AppointmentWithRelations | null> {
     return this.prisma.appointment.delete({
       where: { id },
       include: appointmentInclude,

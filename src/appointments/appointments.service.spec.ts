@@ -26,6 +26,7 @@ describe('AppointmentsService', () => {
     findById: vi.fn(),
     findToday: vi.fn(),
     updateAppointment: vi.fn(),
+    updateAppointmentWithLastVisit: vi.fn(),
     removeAppointment: vi.fn(),
   };
   const employees = { findOneEmployee: vi.fn() };
@@ -136,11 +137,16 @@ describe('AppointmentsService', () => {
       serviceId: null,
       customerId: 'c1',
       employeeId: 'e1',
+      employee: { slotMinutes: 30 },
     };
 
     it('asigna un servicio mediante la relación', async () => {
       repo.findById.mockResolvedValue(existing);
-      services.findOneService.mockResolvedValue({ id: 's1', name: 'Corte' });
+      services.findOneService.mockResolvedValue({
+        id: 's1',
+        name: 'Corte',
+        price: 6500,
+      });
       repo.updateAppointment.mockResolvedValue({ ...existing });
 
       await service.updateAppointment('a1', { serviceId: 's1' });
@@ -148,8 +154,25 @@ describe('AppointmentsService', () => {
       expect(services.findOneService).toHaveBeenCalledWith('s1');
       expect(repo.updateAppointment).toHaveBeenCalledWith(
         'a1',
-        expect.objectContaining({ service: { connect: { id: 's1' } } }),
+        expect.objectContaining({
+          service: { connect: { id: 's1' } },
+          priceAtTime: 6500,
+        }),
       );
+    });
+
+    it('al completar usa la transacción que actualiza lastVisitAt', async () => {
+      repo.findById.mockResolvedValue(existing);
+      repo.updateAppointmentWithLastVisit.mockResolvedValue({ ...existing });
+
+      await service.updateAppointment('a1', { status: 'COMPLETED' });
+
+      expect(repo.updateAppointmentWithLastVisit).toHaveBeenCalledWith(
+        'a1',
+        expect.objectContaining({ status: 'COMPLETED' }),
+        existing.startsAt,
+      );
+      expect(repo.updateAppointment).not.toHaveBeenCalled();
     });
 
     it('extiende la duración recalculando endsAt', async () => {

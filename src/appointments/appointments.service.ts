@@ -7,11 +7,14 @@ import {
 } from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
-import { AppointmentsRepository } from './appointments.repository';
+import {
+  AppointmentsRepository,
+  AppointmentWithRelations,
+} from './appointments.repository';
 import { EmployeesService } from '../employees/employees.service';
 import { CustomersService } from '../customers/customers.service';
 import { ServicesService } from '../services/services.service';
-import { Appointment, Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import { GetAvailableSlotsDto } from './dto/get-available-slots.dto';
 import { calculateAvailableSlots } from './helpers/availability.helper';
 
@@ -84,7 +87,7 @@ export class AppointmentsService {
   // Crea un nuevo turno (sin servicio; el servicio se asigna después)
   async createAppointment(
     createAppointmentDto: CreateAppointmentDto,
-  ): Promise<Appointment> {
+  ): Promise<AppointmentWithRelations> {
     const employee = await this.employeesService.findOneEmployee(
       createAppointmentDto.employeeId,
     );
@@ -165,10 +168,10 @@ export class AppointmentsService {
       throw new NotFoundException('Appointment not found');
     }
 
-    // Si se asigna un servicio, validar que exista
-    if (dto.serviceId) {
-      await this.servicesService.findOneService(dto.serviceId);
-    }
+    // Si se asigna un servicio, validar que exista y capturar su precio actual
+    const assignedService = dto.serviceId
+      ? await this.servicesService.findOneService(dto.serviceId)
+      : null;
 
     const data: Prisma.AppointmentUpdateInput = {};
 
@@ -180,21 +183,38 @@ export class AppointmentsService {
       data.service = dto.serviceId
         ? { connect: { id: dto.serviceId } }
         : { disconnect: true };
+      // Snapshot del precio del servicio al momento de asignarlo (métricas)
+      data.priceAtTime = assignedService ? assignedService.price : null;
     }
     if (dto.notes !== undefined) {
       data.notes = dto.notes;
     }
     if (dto.durationMinutes !== undefined) {
-      data.endsAt = new Date(
+      const newEndsAt = new Date(
         existing.startsAt.getTime() + dto.durationMinutes * 60_000,
       );
+      data.endsAt = newEndsAt;
+
+      // Cantidad de bloques extra ocupados al extender el turno
+      const slotMs = (existing.employee.slotMinutes ?? 30) * 60_000;
+      const extraSlots = Math.round(
+        (newEndsAt.getTime() - existing.endsAt.getTime()) / slotMs,
+      );
+      if (extraSlots > 0) {
+        data.extendedSlots = { increment: extraSlots };
+      }
     }
 
     try {
-      const updated = await this.appointmentsRepository.updateAppointment(
-        id,
-        data,
-      );
+      // Al completar el turno, actualizar lastVisitAt del cliente en una transacción
+      const markCompleted = dto.status === 'COMPLETED';
+      const updated = markCompleted
+        ? await this.appointmentsRepository.updateAppointmentWithLastVisit(
+            id,
+            data,
+            existing.startsAt,
+          )
+        : await this.appointmentsRepository.updateAppointment(id, data);
       if (!updated) {
         throw new NotFoundException('Appointment not found');
       }

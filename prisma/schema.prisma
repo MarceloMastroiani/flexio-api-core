@@ -98,7 +98,17 @@ model Appointment {
   employee       Employee          @relation(fields: [employeeId], references: [id])
   serviceId      String?
   service        Service?          @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  // Snapshot del precio del servicio al momento de asignarlo (para métricas históricas)
+  priceAtTime    Decimal?
+  // Cantidad de bloques extra ocupados al extender el turno (ver README)
+  extendedSlots  Int               @default(0)
   payment        Payment?
+
+  @@index([startsAt])
+  @@index([status, startsAt])
+  @@index([employeeId, startsAt])
+  @@index([customerId])
+  @@index([serviceId])
 }
 
 
@@ -111,4 +121,6 @@ model Payment {
   paidAt        DateTime      @default(now())
   appointmentId String        @unique
   appointment   Appointment   @relation(fields: [appointmentId], references: [id])
+
+  @@index([paidAt])
 }

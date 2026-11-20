@@ -169,6 +169,44 @@ pnpm test:cov    # con cobertura (v8)
 
 ---
 
+## Verificación de performance
+
+Índices agregados para los reportes (migración `20261119120000_reports_indexes`):
+
+- `Payment(paidAt)`
+- `Appointment(startsAt)`
+- `Appointment(status, startsAt)`
+- `Appointment(employeeId, startsAt)`
+- `Appointment(customerId)`
+- `Appointment(serviceId)`
+
+Para verificar que el planner los usa (con volúmenes reales; en tablas chicas puede preferir *seq scan*, por eso se fuerza con `enable_seqscan = off`):
+
+```sql
+SET enable_seqscan = off;
+
+-- Revenue por rango de pago → usa Payment_paidAt_idx
+EXPLAIN SELECT ROUND(COALESCE(SUM("amount"),0),2)::float8
+FROM "Payment"
+WHERE "paidAt" >= '2026-01-01' AND "paidAt" < '2027-01-01';
+
+-- Turnos por estado + fecha → usa Appointment_status_startsAt_idx (Index Only Scan)
+EXPLAIN SELECT count(*)::int
+FROM "Appointment"
+WHERE "status" = 'COMPLETED'
+  AND "startsAt" >= '2026-01-01' AND "startsAt" < '2027-01-01';
+
+-- Turnos por empleado + fecha → usa Appointment_employeeId_startsAt_idx
+EXPLAIN SELECT count(*)::int
+FROM "Appointment"
+WHERE "employeeId" = '<uuid>'
+  AND "startsAt" >= '2026-01-01' AND "startsAt" < '2027-01-01';
+```
+
+Verificado localmente con Docker: `Payment_paidAt_idx` (Index Scan) y `Appointment_status_startsAt_idx` (Index Only Scan). La constraint `no_overlapping_appointments` y la extensión `btree_gist` quedan intactas.
+
+---
+
 ## Frontend
 
 El frontend vive en `../flexio-web` (React + Vite + TypeScript + Tailwind). Corre en `http://localhost:5173` y consume esta API.
@@ -177,8 +215,8 @@ El frontend vive en `../flexio-web` (React + Vite + TypeScript + Tailwind). Corr
 
 ## Notas y pendientes conocidos
 
-- El endpoint `GET /reports/revenue` es un stub (devuelve vacío).
+- El endpoint `GET /reports/revenue` sigue siendo un stub hasta reemplazar el módulo de reportes.
 - El cron de recordatorios por email está desactivado (decorador `@Cron` comentado).
 - Varios endpoints de escritura (PATCH/DELETE de `services` y `employees`, y todo `appointments`) todavía **no tienen guards**; quedan como deuda de seguridad pendiente.
-- Quedan errores de lint preexistentes en módulos no migrados (auth strategies, reports, guards, cash.service, etc.), principalmente uso de `any` e imports sin usar.
-- `tsconfig.json` usa `"ignoreDeprecations": "6.0"` para `baseUrl` y `moduleResolution: node` (obsoleto en TS 7). Migración a `nodenext` planificada.
+- Lint y TypeScript estricto están limpios (`pnpm lint` y `tsc` sin errores). El proyecto usa `module`/`moduleResolution: NodeNext` y `strict` con `exactOptionalPropertyTypes`.
+- Los imports de Prisma usan rutas relativas a `generated/prisma` (no hay alias `@/`).

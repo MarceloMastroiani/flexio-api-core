@@ -10,7 +10,10 @@ interface EnvVars {
   RESEND_API_KEY: string;
   RESEND_FROM_EMAIL: string;
   CORS_ORIGIN: string;
+  BUSINESS_TIMEZONE: string;
 }
+
+const DEFAULT_TIMEZONE = 'America/Argentina/Buenos_Aires';
 
 const envsSchema = Joi.object({
   PORT: Joi.number().required(),
@@ -19,6 +22,7 @@ const envsSchema = Joi.object({
   RESEND_API_KEY: Joi.string().required(),
   RESEND_FROM_EMAIL: Joi.string().email().required(),
   CORS_ORIGIN: Joi.string().required(),
+  BUSINESS_TIMEZONE: Joi.string().default(DEFAULT_TIMEZONE),
 }).unknown(true);
 
 const result = envsSchema.validate(process.env);
@@ -36,4 +40,5 @@ export const envs = {
   resendApiKey: envsVars.RESEND_API_KEY,
   resendFromEmail: envsVars.RESEND_FROM_EMAIL,
   corsOrigin: envsVars.CORS_ORIGIN,
+  businessTimezone: envsVars.BUSINESS_TIMEZONE,
 };
