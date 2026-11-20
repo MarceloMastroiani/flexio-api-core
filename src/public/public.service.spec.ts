@@ -1,5 +1,6 @@
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PublicService } from './public.service';
 import { EmployeesService } from '../employees/employees.service';
 import { CustomersService } from '../customers/customers.service';
@@ -10,7 +11,12 @@ describe('PublicService', () => {
 
   const employees = { findPublicEmployees: vi.fn() };
   const customers = { findByPhone: vi.fn(), createCustomer: vi.fn() };
-  const appointments = { createAppointment: vi.fn() };
+  const appointments = {
+    createAppointment: vi.fn(),
+    findUpcomingByPhone: vi.fn(),
+    findByIdAndPhone: vi.fn(),
+    cancelAppointment: vi.fn(),
+  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -80,6 +86,100 @@ describe('PublicService', () => {
       await expect(service.listEmployees()).resolves.toEqual([
         { id: 'e1', name: 'Nito' },
       ]);
+    });
+  });
+
+  describe('listUpcoming', () => {
+    afterEach(() => vi.useRealTimers());
+
+    it('marca cancellable según el cutoff (2h por defecto)', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-08-01T12:00:00Z')); // cutoff => 14:00
+
+      appointments.findUpcomingByPhone.mockResolvedValue([
+        {
+          id: 'a1',
+          startsAt: new Date('2026-08-01T20:00:00Z'),
+          endsAt: new Date('2026-08-01T20:30:00Z'),
+          status: 'CONFIRMED',
+          employee: { name: 'Nito' },
+        },
+        {
+          id: 'a2',
+          startsAt: new Date('2026-08-01T13:00:00Z'),
+          endsAt: new Date('2026-08-01T13:30:00Z'),
+          status: 'CONFIRMED',
+          employee: { name: 'Nito' },
+        },
+      ]);
+
+      const res = await service.listUpcoming(' 123 ');
+
+      expect(appointments.findUpcomingByPhone).toHaveBeenCalledWith('123');
+      expect(res.items[0]).toMatchObject({
+        id: 'a1',
+        employeeName: 'Nito',
+        cancellable: true,
+      });
+      expect(res.items[1]).toMatchObject({ id: 'a2', cancellable: false });
+    });
+  });
+
+  describe('cancel', () => {
+    afterEach(() => vi.useRealTimers());
+
+    it('404 si no existe o el teléfono no coincide', async () => {
+      appointments.findByIdAndPhone.mockResolvedValue(null);
+
+      await expect(service.cancel('a1', '123')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('400 si el estado no es cancelable', async () => {
+      appointments.findByIdAndPhone.mockResolvedValue({
+        status: 'COMPLETED',
+        startsAt: new Date('2026-12-01T10:00:00Z'),
+      });
+
+      await expect(service.cancel('a1', '123')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
+    it('400 si falta menos que el cutoff', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-08-01T12:00:00Z'));
+
+      appointments.findByIdAndPhone.mockResolvedValue({
+        status: 'CONFIRMED',
+        startsAt: new Date('2026-08-01T13:00:00Z'),
+      });
+
+      await expect(service.cancel('a1', '123')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
+    it('cancela correctamente y normaliza el teléfono', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-08-01T12:00:00Z'));
+
+      appointments.findByIdAndPhone.mockResolvedValue({
+        status: 'CONFIRMED',
+        startsAt: new Date('2026-08-01T20:00:00Z'),
+      });
+      appointments.cancelAppointment.mockResolvedValue({
+        id: 'a1',
+        status: 'CANCELLED',
+      });
+
+      await expect(service.cancel('a1', ' 123 ')).resolves.toEqual({
+        id: 'a1',
+        status: 'CANCELLED',
+      });
+      expect(appointments.findByIdAndPhone).toHaveBeenCalledWith('a1', '123');
+      expect(appointments.cancelAppointment).toHaveBeenCalledWith('a1');
     });
   });
 });

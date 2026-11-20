@@ -11,9 +11,11 @@ interface EnvVars {
   RESEND_FROM_EMAIL: string;
   CORS_ORIGIN: string;
   BUSINESS_TIMEZONE: string;
+  CANCELLATION_CUTOFF_HOURS: number;
 }
 
 const DEFAULT_TIMEZONE = 'America/Argentina/Buenos_Aires';
+const DEFAULT_CANCELLATION_CUTOFF_HOURS = 2;
 
 const envsSchema = Joi.object({
   PORT: Joi.number().required(),
@@ -23,6 +25,9 @@ const envsSchema = Joi.object({
   RESEND_FROM_EMAIL: Joi.string().email().required(),
   CORS_ORIGIN: Joi.string().required(),
   BUSINESS_TIMEZONE: Joi.string().default(DEFAULT_TIMEZONE),
+  CANCELLATION_CUTOFF_HOURS: Joi.number()
+    .min(0)
+    .default(DEFAULT_CANCELLATION_CUTOFF_HOURS),
 }).unknown(true);
 
 const result = envsSchema.validate(process.env);
@@ -41,4 +46,5 @@ export const envs = {
   resendFromEmail: envsVars.RESEND_FROM_EMAIL,
   corsOrigin: envsVars.CORS_ORIGIN,
   businessTimezone: envsVars.BUSINESS_TIMEZONE,
+  cancellationCutoffHours: envsVars.CANCELLATION_CUTOFF_HOURS,
 };

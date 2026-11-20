@@ -115,6 +115,33 @@ export class AppointmentsRepository {
     });
   }
 
+  // Próximos turnos activos de un cliente (por teléfono), para el portal público.
+  async findUpcomingByPhone(
+    phone: string,
+    from: Date,
+  ): Promise<AppointmentWithRelations[]> {
+    return this.prisma.appointment.findMany({
+      where: {
+        customer: { phone },
+        status: { in: ['PENDING', 'CONFIRMED'] },
+        startsAt: { gte: from },
+      },
+      include: appointmentInclude,
+      orderBy: { startsAt: 'asc' },
+    });
+  }
+
+  // Busca un turno por id verificando que pertenezca al teléfono indicado.
+  async findByIdAndPhone(
+    id: string,
+    phone: string,
+  ): Promise<AppointmentWithRelations | null> {
+    return this.prisma.appointment.findFirst({
+      where: { id, customer: { phone } },
+      include: appointmentInclude,
+    });
+  }
+
   async updateAppointment(
     id: string,
     data: Prisma.AppointmentUpdateInput,

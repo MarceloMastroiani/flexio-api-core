@@ -229,6 +229,29 @@ export class AppointmentsService {
     }
   }
 
+  // ── Portal público ──────────────────────────────────────────────────────
+
+  // Próximos turnos activos de un cliente por teléfono
+  findUpcomingByPhone(phone: string) {
+    return this.appointmentsRepository.findUpcomingByPhone(phone, new Date());
+  }
+
+  // Turno por id verificando el teléfono del cliente
+  findByIdAndPhone(id: string, phone: string) {
+    return this.appointmentsRepository.findByIdAndPhone(id, phone);
+  }
+
+  // Cancela un turno (usado por el portal público tras validar el teléfono)
+  async cancelAppointment(id: string) {
+    const updated = await this.appointmentsRepository.updateAppointment(id, {
+      status: 'CANCELLED',
+    });
+    if (!updated) {
+      throw new NotFoundException('Appointment not found');
+    }
+    return updated;
+  }
+
   // Elimina un turno por su ID
   async removeAppointment(id: string) {
     const deletedAppointment =
