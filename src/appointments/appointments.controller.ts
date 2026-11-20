@@ -13,6 +13,7 @@ import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { GetAvailableSlotsDto } from './dto/get-available-slots.dto';
+import { FindAppointmentsQueryDto } from './dto/find-appointments-query.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorador';
@@ -37,10 +38,10 @@ export class AppointmentsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  // Obtiene todos los turnos (privado)
+  // Lista paginada de turnos con filtros (privado)
   @Get()
-  findAllAppointments() {
-    return this.appointmentsService.findAllAppointments();
+  findAllAppointments(@Query() query: FindAppointmentsQueryDto) {
+    return this.appointmentsService.findPaged(query);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

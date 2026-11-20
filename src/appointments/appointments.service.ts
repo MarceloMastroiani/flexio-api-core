@@ -16,7 +16,9 @@ import { CustomersService } from '../customers/customers.service';
 import { ServicesService } from '../services/services.service';
 import { Prisma } from '../../generated/prisma/client';
 import { GetAvailableSlotsDto } from './dto/get-available-slots.dto';
+import { FindAppointmentsQueryDto } from './dto/find-appointments-query.dto';
 import { calculateAvailableSlots } from './helpers/availability.helper';
+import { resolveRange } from '../reports/helpers/date-range.helper';
 
 @Injectable()
 export class AppointmentsService {
@@ -148,6 +150,52 @@ export class AppointmentsService {
     }
 
     return appointments;
+  }
+
+  // Lista paginada con filtros (fecha local, estado, empleado, servicio, texto)
+  async findPaged(dto: FindAppointmentsQueryDto) {
+    const page = dto.page ?? 1;
+    const pageSize = dto.pageSize ?? 20;
+    const order = dto.order ?? 'asc';
+
+    const where: Prisma.AppointmentWhereInput = {};
+
+    if (dto.from || dto.to) {
+      const from = dto.from ?? dto.to!;
+      const to = dto.to ?? dto.from!;
+      const range = resolveRange({ from, to });
+      where.startsAt = { gte: range.fromUtc, lt: range.toUtcExclusive };
+    }
+
+    if (dto.status) {
+      where.status = dto.status;
+    }
+    if (dto.employeeId) {
+      where.employeeId = dto.employeeId;
+    }
+    if (dto.serviceId) {
+      where.serviceId = dto.serviceId;
+    }
+    if (dto.withoutService) {
+      where.serviceId = null;
+    }
+
+    const q = dto.q?.trim();
+    if (q) {
+      where.OR = [
+        { customer: { name: { contains: q, mode: 'insensitive' } } },
+        { customer: { phone: { contains: q } } },
+      ];
+    }
+
+    const { items, total } = await this.appointmentsRepository.findPaged({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      order,
+    });
+
+    return { items, total, page, pageSize };
   }
 
   // Obtiene todos los turnos de hoy

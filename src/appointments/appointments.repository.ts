@@ -75,6 +75,28 @@ export class AppointmentsRepository {
     });
   }
 
+  async findPaged(params: {
+    where: Prisma.AppointmentWhereInput;
+    skip: number;
+    take: number;
+    order: 'asc' | 'desc';
+  }): Promise<{ items: AppointmentWithRelations[]; total: number }> {
+    const { where, skip, take, order } = params;
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.appointment.findMany({
+        where,
+        include: appointmentInclude,
+        orderBy: { startsAt: order },
+        skip,
+        take,
+      }),
+      this.prisma.appointment.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
   async findById(id: string): Promise<AppointmentWithRelations | null> {
     return this.prisma.appointment.findUnique({
       where: { id },

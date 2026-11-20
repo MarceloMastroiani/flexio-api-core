@@ -25,6 +25,7 @@ describe('AppointmentsService', () => {
     findAllAppointments: vi.fn(),
     findById: vi.fn(),
     findToday: vi.fn(),
+    findPaged: vi.fn(),
     updateAppointment: vi.fn(),
     updateAppointmentWithLastVisit: vi.fn(),
     removeAppointment: vi.fn(),
@@ -230,6 +231,84 @@ describe('AppointmentsService', () => {
       await expect(
         service.getAvailableSlots({ employeeId: 'x', date: '2026-12-02' }),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('findPaged', () => {
+    it('usa paginación por defecto y sin filtros de fecha', async () => {
+      repo.findPaged.mockResolvedValue({ items: [], total: 0 });
+
+      const res = await service.findPaged({});
+
+      expect(repo.findPaged).toHaveBeenCalledWith({
+        where: {},
+        skip: 0,
+        take: 20,
+        order: 'asc',
+      });
+      expect(res).toEqual({ items: [], total: 0, page: 1, pageSize: 20 });
+    });
+
+    it('convierte from/to a rango UTC', async () => {
+      repo.findPaged.mockResolvedValue({ items: [], total: 0 });
+
+      await service.findPaged({ from: '2026-01-01', to: '2026-01-31' });
+
+      // Argentina (UTC-3): 00:00 local = 03:00 UTC
+      expect(repo.findPaged).toHaveBeenCalledWith({
+        where: {
+          startsAt: {
+            gte: new Date('2026-01-01T03:00:00.000Z'),
+            lt: new Date('2026-02-01T03:00:00.000Z'),
+          },
+        },
+        skip: 0,
+        take: 20,
+        order: 'asc',
+      });
+    });
+
+    it('aplica filtros y paginación', async () => {
+      repo.findPaged.mockResolvedValue({ items: [], total: 100 });
+
+      const res = await service.findPaged({
+        status: 'CONFIRMED',
+        employeeId: 'e1',
+        serviceId: 's1',
+        q: 'Messi',
+        page: 2,
+        pageSize: 50,
+        order: 'desc',
+      });
+
+      expect(repo.findPaged).toHaveBeenCalledWith({
+        where: {
+          status: 'CONFIRMED',
+          employeeId: 'e1',
+          serviceId: 's1',
+          OR: [
+            { customer: { name: { contains: 'Messi', mode: 'insensitive' } } },
+            { customer: { phone: { contains: 'Messi' } } },
+          ],
+        },
+        skip: 50,
+        take: 50,
+        order: 'desc',
+      });
+      expect(res).toEqual({ items: [], total: 100, page: 2, pageSize: 50 });
+    });
+
+    it('withoutService filtra serviceId null', async () => {
+      repo.findPaged.mockResolvedValue({ items: [], total: 0 });
+
+      await service.findPaged({ withoutService: true });
+
+      expect(repo.findPaged).toHaveBeenCalledWith({
+        where: { serviceId: null },
+        skip: 0,
+        take: 20,
+        order: 'asc',
+      });
     });
   });
 });
