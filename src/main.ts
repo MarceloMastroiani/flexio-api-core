@@ -6,10 +6,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 // NOTE: Este proyecto paso a ser core + vertical en uno. Cuando haya un segundo vertical se creará un nuevo core + vertical.
 
-// INFO: TODO Tarea pendiente en /cash.controller.ts
-// INFO: TODO Tarea pendiente en /reports.controller.ts (Crear una vez este el de Appointments)
-// INFO: TODO Tarea pendiente en /customers.controller.ts
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('mainFlexio');
