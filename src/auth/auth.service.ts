@@ -1,10 +1,27 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { AuthRepository } from './auth.repository';
 import { User } from '../../generated/prisma/client';
-import { comparePassword } from '../common/helpers/hash-password.helpers';
+import {
+  comparePassword,
+  generateTemporaryPassword,
+  hashPassword,
+} from '../common/helpers/hash-password.helpers';
 import { JwtService } from '@nestjs/jwt';
-import { SafeUser } from './dto/login-auth.dto';
+import { ProfileUser, SafeUser } from './dto/login-auth.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+
+type LoginUser = Pick<User, 'id' | 'email' | 'role'> & {
+  mustChangePassword?: boolean;
+  createdAt?: Date;
+};
 
 @Injectable()
 export class AuthService {
@@ -31,11 +48,83 @@ export class AuthService {
     return result;
   }
 
-  login(user: Omit<User, 'password'>) {
-    const payload = { email: user.email, sub: user.id, role: user.role };
+  login(user: LoginUser) {
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      mustChangePassword: user.mustChangePassword ?? false,
+    };
     return {
       access_token: this.jwtService.sign(payload),
     };
+  }
+
+  async getProfile(userId: string): Promise<ProfileUser> {
+    const user = await this.authRepository.findProfile(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      mustChangePassword: user.mustChangePassword,
+      employeeId: user.employee?.id ?? null,
+    };
+  }
+
+  async changeOwnPassword(
+    userId: string,
+    changePasswordDto: ChangePasswordDto,
+  ) {
+    const user = await this.authRepository.findOneWithPassword(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const passwordMatch = await comparePassword(
+      changePasswordDto.currentPassword,
+      user.password,
+    );
+    if (!passwordMatch) {
+      throw new BadRequestException('La contraseña actual no es correcta');
+    }
+
+    if (changePasswordDto.newPassword === changePasswordDto.currentPassword) {
+      throw new BadRequestException(
+        'La nueva contraseña debe ser distinta de la actual',
+      );
+    }
+
+    const hashedPassword = await hashPassword(changePasswordDto.newPassword);
+    await this.authRepository.updatePassword(userId, hashedPassword, false);
+
+    // Token nuevo con mustChangePassword=false para que el RolesGuard permita seguir.
+    return this.login({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      mustChangePassword: false,
+    });
+  }
+
+  async resetPassword(
+    userId: string,
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ temporaryPassword: string }> {
+    const user = await this.authRepository.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const temporaryPassword =
+      resetPasswordDto.password?.trim() || generateTemporaryPassword();
+    const hashedPassword = await hashPassword(temporaryPassword);
+    await this.authRepository.updatePassword(userId, hashedPassword, true);
+
+    return { temporaryPassword };
   }
 
   // ============================================================
@@ -70,10 +159,7 @@ export class AuthService {
     const user = await this.authRepository.findOne(id);
 
     if (!user) {
-      throw new HttpException(
-        'Failed to find user',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new NotFoundException('User not found');
     }
 
     return user;

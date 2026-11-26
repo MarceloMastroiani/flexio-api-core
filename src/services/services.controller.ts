@@ -37,6 +37,8 @@ export class ServicesController {
   }
 
   // Edita nombre, duración o precio
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch(':id')
   updateService(
     @Param('id') id: string,
@@ -46,6 +48,8 @@ export class ServicesController {
   }
 
   // elimina un servicio
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Delete(':id')
   deleteService(@Param('id') id: string) {
     return this.servicesService.deleteService(id);

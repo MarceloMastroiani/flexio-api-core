@@ -104,7 +104,7 @@ export class AppointmentsRepository {
     });
   }
 
-  async findToday(): Promise<AppointmentWithRelations[]> {
+  async findToday(employeeId?: string): Promise<AppointmentWithRelations[]> {
     const now = new Date();
     const start = new Date(
       Date.UTC(
@@ -132,6 +132,7 @@ export class AppointmentsRepository {
     return this.prisma.appointment.findMany({
       where: {
         startsAt: { gte: start, lt: end },
+        ...(employeeId ? { employeeId } : {}),
       },
       include: appointmentInclude,
     });

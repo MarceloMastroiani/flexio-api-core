@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
@@ -17,12 +18,14 @@ import { FindAppointmentsQueryDto } from './dto/find-appointments-query.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorador';
+import { AuthenticatedUser } from '../common/types/authenticated-user';
 
 @Controller('appointments')
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
-  // Obtiene los horarios disponibles de un empleado en una fecha (público)
+  // Obtiene los horarios disponibles de un empleado en una fecha.
+  // Es público: lo usa el booking público y también el panel para extender turnos.
   @Get('available')
   getAvailableSlots(@Query() getAvailableSlotsDto: GetAvailableSlotsDto) {
     return this.appointmentsService.getAvailableSlots(getAvailableSlotsDto);
@@ -37,30 +40,38 @@ export class AppointmentsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
-  // Lista paginada de turnos con filtros (privado)
+  @Roles('ADMIN', 'STAFF')
+  // Lista paginada de turnos con filtros (privado). STAFF solo ve los propios.
   @Get()
-  findAllAppointments(@Query() query: FindAppointmentsQueryDto) {
-    return this.appointmentsService.findPaged(query);
+  findAllAppointments(
+    @Query() query: FindAppointmentsQueryDto,
+    @Request() req: { user: AuthenticatedUser },
+  ) {
+    return this.appointmentsService.findPaged(query, req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'STAFF')
-  // Obtiene los turnos de hoy (privado)
+  // Obtiene los turnos de hoy (privado). STAFF solo ve los propios.
   @Get('today')
-  findToday() {
-    return this.appointmentsService.findToday();
+  findToday(@Request() req: { user: AuthenticatedUser }) {
+    return this.appointmentsService.findToday(req.user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'STAFF')
-  // Actualiza estado / servicio / duración de un turno (privado)
+  // Actualiza estado / servicio / duración de un turno (privado).
   @Patch(':id')
   updateAppointment(
     @Param('id') id: string,
     @Body() updateAppointmentDto: UpdateAppointmentDto,
+    @Request() req: { user: AuthenticatedUser },
   ) {
-    return this.appointmentsService.updateAppointment(id, updateAppointmentDto);
+    return this.appointmentsService.updateAppointment(
+      id,
+      updateAppointmentDto,
+      req.user,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
