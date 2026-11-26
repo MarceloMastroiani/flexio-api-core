@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppointmentsService } from './appointments.service';
@@ -31,7 +35,10 @@ describe('AppointmentsService', () => {
     updateAppointmentWithLastVisit: vi.fn(),
     removeAppointment: vi.fn(),
   };
-  const employees = { findOneEmployee: vi.fn() };
+  const employees = {
+    findOneEmployee: vi.fn(),
+    findEmployeeByUserId: vi.fn(),
+  };
   const customers = { findOneCustomer: vi.fn() };
   const services = { findOneService: vi.fn() };
 
@@ -198,6 +205,36 @@ describe('AppointmentsService', () => {
         service.updateAppointment('x', { status: 'CONFIRMED' }),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
+
+    const staffUser = {
+      userId: 'u1',
+      email: 'staff@mail.com',
+      role: 'STAFF' as const,
+      mustChangePassword: false,
+    };
+
+    it('STAFF no puede modificar un turno de otro empleado', async () => {
+      repo.findById.mockResolvedValue(existing);
+      employees.findEmployeeByUserId.mockResolvedValue({ id: 'e-otro' });
+
+      await expect(
+        service.updateAppointment('a1', { status: 'CONFIRMED' }, staffUser),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(repo.updateAppointment).not.toHaveBeenCalled();
+    });
+
+    it('STAFF puede modificar un turno propio', async () => {
+      repo.findById.mockResolvedValue(existing);
+      employees.findEmployeeByUserId.mockResolvedValue({ id: 'e1' });
+      repo.updateAppointment.mockResolvedValue({ ...existing });
+
+      await service.updateAppointment('a1', { status: 'CONFIRMED' }, staffUser);
+
+      expect(repo.updateAppointment).toHaveBeenCalledWith(
+        'a1',
+        expect.objectContaining({ status: 'CONFIRMED' }),
+      );
+    });
   });
 
   describe('getAvailableSlots', () => {
@@ -311,6 +348,71 @@ describe('AppointmentsService', () => {
         take: 20,
         order: 'asc',
       });
+    });
+
+    it('STAFF solo ve su propio empleado e ignora el filtro de la query', async () => {
+      employees.findEmployeeByUserId.mockResolvedValue({ id: 'e-own' });
+      repo.findPaged.mockResolvedValue({ items: [], total: 0 });
+
+      await service.findPaged(
+        { employeeId: 'e-otro' },
+        {
+          userId: 'u1',
+          email: 'staff@mail.com',
+          role: 'STAFF',
+          mustChangePassword: false,
+        },
+      );
+
+      expect(employees.findEmployeeByUserId).toHaveBeenCalledWith('u1');
+      expect(repo.findPaged).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { employeeId: 'e-own' } }),
+      );
+    });
+
+    it('STAFF sin empleado vinculado recibe 403', async () => {
+      employees.findEmployeeByUserId.mockResolvedValue(null);
+
+      await expect(
+        service.findPaged(
+          {},
+          {
+            userId: 'u1',
+            email: 'staff@mail.com',
+            role: 'STAFF',
+            mustChangePassword: false,
+          },
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+  });
+
+  describe('findToday', () => {
+    it('STAFF solo recibe los turnos de su empleado', async () => {
+      employees.findEmployeeByUserId.mockResolvedValue({ id: 'e-own' });
+      repo.findToday.mockResolvedValue([]);
+
+      await service.findToday({
+        userId: 'u1',
+        email: 'staff@mail.com',
+        role: 'STAFF',
+        mustChangePassword: false,
+      });
+
+      expect(repo.findToday).toHaveBeenCalledWith('e-own');
+    });
+
+    it('ADMIN recibe todos los turnos', async () => {
+      repo.findToday.mockResolvedValue([]);
+
+      await service.findToday({
+        userId: 'admin',
+        email: 'admin@mail.com',
+        role: 'ADMIN',
+        mustChangePassword: false,
+      });
+
+      expect(repo.findToday).toHaveBeenCalledWith(undefined);
     });
   });
 });

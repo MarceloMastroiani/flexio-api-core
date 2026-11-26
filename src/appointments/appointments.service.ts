@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -20,6 +21,7 @@ import { FindAppointmentsQueryDto } from './dto/find-appointments-query.dto';
 import { calculateAvailableSlots } from './helpers/availability.helper';
 import { resolveRange } from '../reports/helpers/date-range.helper';
 import { envs } from '../common/configs/envs';
+import { AuthenticatedUser } from '../common/types/authenticated-user';
 
 @Injectable()
 export class AppointmentsService {
@@ -29,6 +31,29 @@ export class AppointmentsService {
     private readonly customersService: CustomersService,
     private readonly servicesService: ServicesService,
   ) {}
+
+  /**
+   * Si el usuario es STAFF, devuelve el id de su empleado para restringir
+   * todas las consultas a su propia agenda. ADMIN no tiene restricción.
+   */
+  private async resolveEmployeeScope(
+    user?: AuthenticatedUser,
+  ): Promise<string | null> {
+    if (!user || user.role !== 'STAFF') {
+      return null;
+    }
+
+    const employee = await this.employeesService.findEmployeeByUserId(
+      user.userId,
+    );
+    if (!employee) {
+      throw new ForbiddenException(
+        'Tu usuario no está vinculado a un empleado',
+      );
+    }
+
+    return employee.id;
+  }
 
   // Obtiene los horarios disponibles de un empleado en una fecha.
   // La duración de cada slot es el `slotMinutes` configurado para el empleado.
@@ -132,10 +157,11 @@ export class AppointmentsService {
   }
 
   // Lista paginada con filtros (fecha local, estado, empleado, servicio, texto)
-  async findPaged(dto: FindAppointmentsQueryDto) {
+  async findPaged(dto: FindAppointmentsQueryDto, user?: AuthenticatedUser) {
     const page = dto.page ?? 1;
     const pageSize = dto.pageSize ?? 20;
     const order = dto.order ?? 'asc';
+    const scopeEmployeeId = await this.resolveEmployeeScope(user);
 
     const where: Prisma.AppointmentWhereInput = {};
 
@@ -149,7 +175,10 @@ export class AppointmentsService {
     if (dto.status) {
       where.status = dto.status;
     }
-    if (dto.employeeId) {
+    if (scopeEmployeeId) {
+      // STAFF: se fuerza su propio empleado, ignorando el filtro de la query.
+      where.employeeId = scopeEmployeeId;
+    } else if (dto.employeeId) {
       where.employeeId = dto.employeeId;
     }
     if (dto.serviceId) {
@@ -177,9 +206,12 @@ export class AppointmentsService {
     return { items, total, page, pageSize };
   }
 
-  // Obtiene todos los turnos de hoy
-  async findToday() {
-    const appointmentsToday = await this.appointmentsRepository.findToday();
+  // Obtiene todos los turnos de hoy (STAFF: solo los de su empleado)
+  async findToday(user?: AuthenticatedUser) {
+    const scopeEmployeeId = await this.resolveEmployeeScope(user);
+    const appointmentsToday = await this.appointmentsRepository.findToday(
+      scopeEmployeeId ?? undefined,
+    );
 
     if (!appointmentsToday) {
       throw new HttpException('No appointments found', HttpStatus.NOT_FOUND);
@@ -189,10 +221,21 @@ export class AppointmentsService {
   }
 
   // Actualiza un turno: estado, servicio asignado, duración (extender) y notas
-  async updateAppointment(id: string, dto: UpdateAppointmentDto) {
+  async updateAppointment(
+    id: string,
+    dto: UpdateAppointmentDto,
+    user?: AuthenticatedUser,
+  ) {
     const existing = await this.appointmentsRepository.findById(id);
     if (!existing) {
       throw new NotFoundException('Appointment not found');
+    }
+
+    const scopeEmployeeId = await this.resolveEmployeeScope(user);
+    if (scopeEmployeeId && existing.employeeId !== scopeEmployeeId) {
+      throw new ForbiddenException(
+        'No podés modificar turnos de otro empleado',
+      );
     }
 
     // Si se asigna un servicio, validar que exista y capturar su precio actual

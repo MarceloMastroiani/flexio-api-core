@@ -39,12 +39,13 @@ enum PaymentMethod {
 // Administrador y Staff
 // User (cuenta de login)
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  password  String
-  role      Role
-  createdAt DateTime  @default(now())
-  employee  Employee?
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  password           String
+  role               Role
+  mustChangePassword Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  employee           Employee?
 }
 
 // Clientes

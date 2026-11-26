@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class TimeRangeDto {
+export class TimeRangeDto {
   @IsString()
   @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
     message: 'start debe tener formato HH:mm',
@@ -24,7 +24,7 @@ class TimeRangeDto {
   end!: string;
 }
 
-class DayAvailabilityDto {
+export class DayAvailabilityDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

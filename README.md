@@ -89,10 +89,15 @@ Todas las rutas llevan el prefijo `/api`.
 | Método | Ruta | Descripción | Auth |
 |---|---|---|---|
 | POST | `/auth/login` | Login (email + password) → `{ access_token }` | público |
-| GET | `/auth/profile` | Perfil del usuario logueado | JWT |
-| POST | `/auth` | Crear usuario (ADMIN/STAFF) | ADMIN |
-| GET | `/auth` | Listar usuarios | ADMIN |
-| GET | `/auth/:id` | Obtener un usuario | ADMIN |
+| GET | `/auth/profile` | Perfil del usuario logueado (`mustChangePassword`, `employeeId`) | JWT |
+| PATCH | `/auth/me/password` | Cambia la contraseña propia: `{ currentPassword, newPassword }` → token nuevo | JWT |
+| POST | `/auth` | Crea un usuario administrador | ADMIN |
+| GET | `/auth` | Lista usuarios (sin datos sensibles) | ADMIN |
+| GET | `/auth/:id` | Obtiene un usuario (sin datos sensibles) | ADMIN |
+| PATCH | `/auth/:id/password` | Restablece la contraseña de un usuario. Si no se envía `password`, genera una temporal y la devuelve una sola vez | ADMIN |
+
+> Las contraseñas se guardan hasheadas con bcrypt. El ADMIN no puede verlas: solo restablecerlas.
+> Si un usuario tiene `mustChangePassword: true` (contraseña temporal), la API rechaza el resto de los endpoints protegidos hasta que use `PATCH /auth/me/password`.
 
 ### Público (`/api/public`) — sin login
 | Método | Ruta | Descripción |
@@ -130,10 +135,13 @@ Todas las rutas llevan el prefijo `/api`.
 ### Empleados (`/api/employees`)
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/employees/:userId` | Crea empleado vinculado a un usuario: `{ name, email?, slotMinutes?, availability }` |
-| GET | `/employees` | Lista empleados |
-| PATCH | `/employees/:id` | Actualiza nombre/email/slotMinutes/disponibilidad |
-| DELETE | `/employees/:id` | Elimina empleado |
+| POST | `/employees` | Alta en un paso: crea el usuario STAFF + empleado. `{ name, email, password?, slotMinutes?, availability }`. Si no se envía `password`, se genera una temporal y se devuelve una sola vez |
+| POST | `/employees/:userId` | Vincula un usuario STAFF ya existente a un empleado: `{ name, email?, slotMinutes?, availability }` |
+| GET | `/employees` | ADMIN: todos los empleados. STAFF: solo su propio empleado (`id`, `name`) |
+| PATCH | `/employees/:id` | Actualiza nombre/email/slotMinutes/disponibilidad (ADMIN) |
+| DELETE | `/employees/:id` | Elimina empleado (ADMIN) |
+
+> **Acceso del STAFF:** ve únicamente su propia agenda. `GET /appointments`, `GET /appointments/today` y `PATCH /appointments/:id` aplican el scoping por el empleado vinculado al usuario; no puede ver ni modificar turnos de otros profesionales.
 
 ### Caja (`/api/cash`) — ADMIN
 | Método | Ruta | Descripción |
